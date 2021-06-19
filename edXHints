@@ -9,3 +9,12 @@ Recommendation systems are more complicated machine learning challenges because 
 To compare different models or to see how well we’re doing compared to a baseline, we will use root mean squared error (RMSE) as our loss function. We can interpret RMSE similar to standard deviation.
 If  is the number of user-movie combinations,  is the rating for movie  by user , and  is our prediction, then RMSE is defined as follows: 
 
+###############################################################################
+##https://rafalab.github.io/dsbook/large-datasets.html#recommendation-systems##
+##https://rafalab.github.io/dsbook/large-datasets.html#regularization        ##
+##https://rafalab.github.io/dsbook/large-datasets.html#matrix-factorization  ##
+###############################################################################
+
+Also..
+
+https://www.kaggle.com/arpanc/classification-analysis-with-patient-fall-data
