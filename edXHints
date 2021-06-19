@@ -1,0 +1,11 @@
+edX guidance from Machine Learning course:
+
+The caret package requires that we add column names to the feature matrices.
+In general, it is a good idea to test out a small subset of the data first to get an idea of how long your code will take to run.
+
+Ensembles combine multiple machine learning algorithms into one model to improve predictions.
+
+Recommendation systems are more complicated machine learning challenges because each outcome has a different set of predictors. For example, different users rate a different number of movies and rate different movies.
+To compare different models or to see how well we’re doing compared to a baseline, we will use root mean squared error (RMSE) as our loss function. We can interpret RMSE similar to standard deviation.
+If  is the number of user-movie combinations,  is the rating for movie  by user , and  is our prediction, then RMSE is defined as follows: 
+
