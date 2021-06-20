@@ -1,12 +1,11 @@
-library(dslabs)
 library(tidyverse)
 library(caret)
-data("movielens")
+data("edx")
 set.seed(755)
-test_index <- createDataPartition(y = movielens$rating, times = 1,
+test_index <- createDataPartition(y = edx$rating, times = 1,
                                   p = 0.2, list = FALSE)
-train_set <- movielens[-test_index,]
-test_set <- movielens[test_index,]
+train_set <- edx[-test_index,]
+test_set <- edx[test_index,]
 test_set <- test_set %>% 
   semi_join(train_set, by = "movieId") %>%
   semi_join(train_set, by = "userId")
@@ -33,7 +32,7 @@ user_avgs <- test_set %>%
   summarize(b_u = mean(rating - mu - b_i))
 predicted_ratings <- test_set %>% 
   left_join(movie_avgs, by='movieId') %>%
-  >     left_join(user_avgs, by='userId') %>%
+  left_join(user_avgs, by='userId') %>%
   mutate(pred = mu + b_i + b_u) %>%
   .$pred
 model_2_rmse <- RMSE(predicted_ratings, test_set$rating)
@@ -47,7 +46,7 @@ test_set %>%
   arrange(desc(abs(residual))) %>% 
   select(title,  residual) %>% slice(1:10) %>% knitr::kable()
 
-movie_titles <- movielens %>% 
+movie_titles <- edx %>% 
   select(movieId, title) %>%
   distinct()
 movie_avgs %>% left_join(movie_titles, by="movieId") %>%
