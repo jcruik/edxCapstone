@@ -15,7 +15,7 @@ library(caret)
 
 ##partition the data set created in the provided code into a test set and training set for model training and testing
 #set seed for repeatable randomness
-set.seed(1)
+set.seed(1, sample.kind = "Rounding")
 
 #create data partition index to split 20% of the edx set into a test set and 80% into a training set
 train_index <- createDataPartition(y = edx$rating,
@@ -49,16 +49,20 @@ movie_avgs <- train_set %>%
 user_avgs <- train_set %>%
   left_join(movie_avgs, by = 'movieId') %>%
   group_by(userId) %>%
-  # filter(n() >= 100) %>%
+  filter(n() >= 10) %>%
   summarize(movie_eff = mean(rating - mean - user_eff))
 
+#predict ratings using user and movie effects model
 predicted_ratings <- test_set %>%
   left_join(movie_avgs, by = 'movieId') %>%
   left_join(user_avgs, by = 'userId') %>%
   mutate(prediction = mean + user_eff + movie_eff) %>%
   .$prediction
 
+#calculate the RMSE of the predictions
 RMSE(test_set$rating, predicted_ratings)
+
+#add regularization, effects noted here: https://rafalab.github.io/dsbook/large-datasets.html#exercises-59
 
 ##calculate RMSE based on validation set
 #remove movies or users which only appear in the validation or edx training set
