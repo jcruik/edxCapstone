@@ -1,11 +1,10 @@
 library(tidyverse)
 library(caret)
-data("edx")
 set.seed(755)
 test_index <- createDataPartition(y = edx$rating, times = 1,
                                   p = 0.2, list = FALSE)
 train_set <- edx[-test_index,]
-test_set <- edx[test_index,]
+test_set <- validation
 test_set <- test_set %>% 
   semi_join(train_set, by = "movieId") %>%
   semi_join(train_set, by = "userId")
@@ -26,7 +25,7 @@ model_1_rmse <- RMSE(predicted_ratings, test_set$rating)
 rmse_results <- bind_rows(rmse_results,
                           data_frame(method="Movie Effect Model",
                                      RMSE = model_1_rmse ))
-user_avgs <- test_set %>% 
+user_avgs <- train_set %>% 
   left_join(movie_avgs, by='movieId') %>%
   group_by(userId) %>%
   summarize(b_u = mean(rating - mu - b_i))
@@ -46,7 +45,7 @@ test_set %>%
   arrange(desc(abs(residual))) %>% 
   select(title,  residual) %>% slice(1:10) %>% knitr::kable()
 
-movie_titles <- edx %>% 
+movie_titles <- edx %>%
   select(movieId, title) %>%
   distinct()
 movie_avgs %>% left_join(movie_titles, by="movieId") %>%
