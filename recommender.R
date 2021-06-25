@@ -6,12 +6,12 @@
 #Require and install tidyverse and caret packages
 if (!require(tidyverse))
   install.packages("tidyverse")
-if (!require(caret))
-  install.packages("caret")
+if (!require(lubridate))
+  install.packages("lubridate")
 
 #load required packages to library
 library(tidyverse)
-library(caret)
+library(lubridate)
 
 ##partition the data set created in the provided code into a test set and training set for model training and testing
 #set seed for repeatable randomness
@@ -49,20 +49,59 @@ movie_avgs <- train_set %>%
 user_avgs <- train_set %>%
   left_join(movie_avgs, by = 'movieId') %>%
   group_by(userId) %>%
-  filter(n() >= 10) %>%
   summarize(movie_eff = mean(rating - mean - user_eff))
 
 #predict ratings using user and movie effects model
-predicted_ratings <- test_set %>%
+prediction <- test_set %>%
   left_join(movie_avgs, by = 'movieId') %>%
   left_join(user_avgs, by = 'userId') %>%
-  mutate(prediction = mean + user_eff + movie_eff) %>%
-  .$prediction
+  mutate(pred = mean + user_eff + movie_eff) %>%
+  .$pred
 
 #calculate the RMSE of the predictions
-RMSE(test_set$rating, predicted_ratings)
+return(RMSE(test_set$rating, prediction))
 
-#add regularization, effects noted here: https://rafalab.github.io/dsbook/large-datasets.html#exercises-59
+##add date effect to model
+#plot rating va. date plot
+train_set %>%
+  mutate(date = as_datetime(timestamp)) %>%
+  sample_n(100) %>%
+  ggplot(aes(date,rating)) +
+  geom_point()
+
+#add date and genre functions, effects noted here: https://rafalab.github.io/dsbook/large-datasets.html#exercises-59
+
+##regularize movie and user effects to be conservative when estimating based on small sample sizes
+#create an array of lambda values for tuning algorithm
+lambdas <- seq(0, 10, 0.25)
+
+#perform cross validation of the regularized user + movie effects model, different values of lambda
+rmses <- sapply(lambdas, function(l){ #supply array of lambda values and run cross validation
+  
+  #calculate user effect with each lambda
+  user_avgs <- train_set %>%
+    group_by(movieId) %>%
+    summarize(user_eff = sum(rating - mean)/(n()+l))
+  
+  #calculate movie effect with each lambda
+  movie_avgs <- train_set %>% 
+    left_join(user_avgs, by="movieId") %>%
+    group_by(userId) %>%
+    summarize(movie_eff = sum(rating - user_eff - mean)/(n()+l))
+  
+  #calculate predictions and ensure they're in the test set
+  prediction <- test_set %>% 
+    left_join(user_avgs, by = "movieId") %>%
+    left_join(movie_avgs, by = "userId") %>%
+    mutate(pred = mean + user_eff + movie_eff) %>%
+    .$pred
+  
+  #return RMSE for each lambda
+  return(RMSE(prediction, test_set$rating))
+})
+
+#select lambda from cross which minimizes RMSE
+l <- lambdas[which.min(rmses)]
 
 ##calculate RMSE based on validation set
 #remove movies or users which only appear in the validation or edx training set
