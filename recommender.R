@@ -62,12 +62,15 @@ prediction <- test_set %>%
 return(RMSE(test_set$rating, prediction))
 
 ##add date effect to model
-#plot rating va. date plot
-train_set %>%
-  mutate(date = as_datetime(timestamp)) %>%
-  sample_n(100) %>%
-  ggplot(aes(date,rating)) +
-  geom_point()
+#plot average weekly rating vs. date plot
+date_eff <- train_set %>%
+  mutate(date = as_datetime(timestamp), week = round_date(date, unit = "week")) %>%
+  group_by(week) %>%
+  summarize(week_eff = mean(rating)-mean)
+
+date_eff %>% ggplot(aes(week,week_eff)) +
+  geom_point() +
+  geom_smooth(method = "loess")
 
 #add date and genre functions, effects noted here: https://rafalab.github.io/dsbook/large-datasets.html#exercises-59
 
