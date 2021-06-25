@@ -59,18 +59,33 @@ prediction <- test_set %>%
   .$pred
 
 #calculate the RMSE of the predictions
-return(RMSE(test_set$rating, prediction))
+RMSE(test_set$rating, prediction)
 
 ##add date effect to model
-#plot average weekly rating vs. date plot
-date_eff <- train_set %>%
+date_eff <- train_set %>% 
+  
+  #add column with week of rating
   mutate(date = as_datetime(timestamp), week = round_date(date, unit = "week")) %>%
+  
+  #calculate the average rating for the week
   group_by(week) %>%
   summarize(week_eff = mean(rating)-mean)
 
+#plot average weekly rating vs. date plot
 date_eff %>% ggplot(aes(week,week_eff)) +
   geom_point() +
-  geom_smooth(method = "loess")
+  geom_smooth(method = "loess", span = 0.5)
+
+#create loess model to predict the effect of week on rating
+date_fit <- loess(date_eff$week_eff ~ as.numeric(date_eff$week, span = 0.5))
+
+#predict ratings using user, movie, and date effects model
+prediction <- test_set %>%
+  mutate(date = as_datetime(timestamp), week = round_date(date, unit = "week")) %>%
+  left_join(movie_avgs, by = 'movieId') %>%
+  left_join(user_avgs, by = 'userId') %>%
+  mutate(pred = mean + user_eff + movie_eff) %>%
+  .$pred
 
 #add date and genre functions, effects noted here: https://rafalab.github.io/dsbook/large-datasets.html#exercises-59
 
