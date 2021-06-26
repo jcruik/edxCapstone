@@ -23,8 +23,12 @@ train_index <- createDataPartition(y = edx$rating,
                                    list = FALSE)
 
 #create partitioned data sets using index
-train_set <- edx[-train_index]
-test_set <- edx[train_index]
+train_set <- edx[train_index,]
+test_set <- edx[-train_index,]
+
+#FOR TESTING ONLY, cut dataset down
+# train_set <- train_set %>% slice_sample(n = 100000)
+# test_set <- test_set %>% slice_sample(n = 10000)
 
 #remove movies or users which only appear in one set or the other
 test_set <- test_set %>%
@@ -62,29 +66,39 @@ prediction <- test_set %>%
 RMSE(test_set$rating, prediction)
 
 ##add date effect to model
-date_eff <- train_set %>% 
+date_avgs <- train_set %>%
+  left_join(movie_avgs, by = 'movieId') %>%
+  left_join(user_avgs, by = 'userId') %>%
   
   #add column with week of rating
   mutate(date = as_datetime(timestamp), week = round_date(date, unit = "week")) %>%
   
   #calculate the average rating for the week
   group_by(week) %>%
-  summarize(week_eff = mean(rating)-mean)
+  summarize(week_eff = mean(rating-mean-user_eff-movie_eff))
+  
 
-#plot average weekly rating vs. date plot
-date_eff %>% ggplot(aes(week,week_eff)) +
+#plot average weekly rating vs. date
+date_avgs %>% ggplot(aes(week,week_eff)) +
   geom_point() +
   geom_smooth(method = "loess", span = 0.5)
 
 #create loess model to predict the effect of week on rating
 date_fit <- loess(date_eff$week_eff ~ as.numeric(date_eff$week, span = 0.5))
 
-#predict ratings using user, movie, and date effects model
-prediction <- test_set %>%
-  mutate(date = as_datetime(timestamp), week = round_date(date, unit = "week")) %>%
+##predict ratings using user, movie, and date effects model
+#calculate week from test set timestamps
+test_set_week <- test_set %>%
+  mutate(week = as.numeric(round_date(as_datetime(timestamp), unit = "week")))
+
+#apply date effect function based on week
+test_set_week$date_eff <- predict(date_fit, test_set_week$week)
+
+#calculate predicted rating
+prediction <- test_set_week %>%
   left_join(movie_avgs, by = 'movieId') %>%
   left_join(user_avgs, by = 'userId') %>%
-  mutate(pred = mean + user_eff + movie_eff) %>%
+  mutate(pred = mean + user_eff + movie_eff + date_eff) %>%
   .$pred
 
 #add date and genre functions, effects noted here: https://rafalab.github.io/dsbook/large-datasets.html#exercises-59
