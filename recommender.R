@@ -65,37 +65,56 @@ prediction <- test_set %>%
 #calculate the RMSE of the predictions
 RMSE(test_set$rating, prediction)
 
+##add genre effect to model
+#plot distribution of ratings by genre
+train_set %>%
+  group_by(genres) %>%
+  filter(n() > 10000) %>%
+  summarise(mean = mean(rating), sd = sd(rating), upper = mean + sd, lower = mean - sd) %>%
+  ggplot(aes(genres, mean)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower, ymax = upper)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
 ##add date effect to model
 date_avgs <- train_set %>%
   left_join(movie_avgs, by = 'movieId') %>%
   left_join(user_avgs, by = 'userId') %>%
   
-  #add column with year of rating
-  mutate(date = as_datetime(timestamp), year = round_date(date, unit = "year")) %>%
+  #add column with week of rating
+  mutate(date = as_datetime(timestamp), week = round_date(date, unit = "week")) %>%
   
-  #calculate average movie rating above or below the mean for each user and movie, by year
-  group_by(year) %>%
+  #calculate average movie rating above or below the mean for each user and movie, by week
+  group_by(week) %>%
   summarize(date_eff = mean(rating-mean-user_eff-movie_eff))
   
 
-#plot average yearly rating vs. date
-date_avgs %>% ggplot(aes(year,date_eff)) +
-  geom_col()
+#plot average weekly rating vs. date
+date_avgs %>% 
+  group_by(week) %>%
+  ggplot(aes(week,date_eff)) +
+  geom_point() +
+  geom_smooth() +
+  coord_cartesian(ylim = c(-0.1,0.1))
 
 ##predict ratings using user, movie, and date effects model
-#calculate year from test set timestamps
+#calculate week from test set timestamps
 test_set_date <- test_set %>%
-  mutate(year = as.numeric(round_date(as_datetime(timestamp), unit = "year")))
-
+  mutate(week = round_date(as_datetime(timestamp), unit = "week"))
 
 #calculate predicted rating
 prediction <- test_set_date %>%
   left_join(movie_avgs, by = 'movieId') %>%
   left_join(user_avgs, by = 'userId') %>%
+  left_join(date_avgs, by = 'week') %>%
   mutate(pred = mean + user_eff + movie_eff + date_eff) %>%
   .$pred
 
-#add date and genre functions, effects noted here: https://rafalab.github.io/dsbook/large-datasets.html#exercises-59
+#calculate the RMSE of the predictions
+RMSE(test_set_date$rating, prediction)
+
+
+#add genre functions, effects noted here: https://rafalab.github.io/dsbook/large-datasets.html#exercises-59
 
 ##regularize movie and user effects to be conservative when estimating based on small sample sizes
 #create an array of lambda values for tuning algorithm
