@@ -114,6 +114,32 @@ train_set %>%
   geom_errorbar(aes(ymin = lower, ymax = upper)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
+#calculate average impact of genre on user rating of movie
+genre_avgs <- train_set %>%
+  
+  #add column with week of rating
+  mutate(week = round_date(as_datetime(timestamp), unit = "week")) %>%
+  
+  #add user, movie, and date effects
+  left_join(movie_avgs, by = 'movieId') %>%
+  left_join(user_avgs, by = 'userId') %>%
+  left_join(date_avgs,by = 'week') %>%
+  
+  #calculate average movie rating above or below the mean for each user and movie, by genre
+  group_by(genres) %>%
+  summarize(genre_eff = mean(rating-mean-user_eff-movie_eff-date_eff))
+
+#calculate predicted rating
+prediction <- test_set_date %>%
+  left_join(movie_avgs, by = 'movieId') %>%
+  left_join(user_avgs, by = 'userId') %>%
+  left_join(date_avgs, by = 'week') %>%
+  left_join(genre_avgs, by = 'genres') %>%
+  mutate(pred = mean + user_eff + movie_eff + date_eff + genre_eff) %>%
+  .$pred
+
+#calculate the RMSE of the predictions
+RMSE(test_set_date$rating, prediction)
 
 ##regularize effects to be conservative when estimating based on small sample sizes
 #create an array of lambda values for tuning algorithm
@@ -133,7 +159,7 @@ rmses <- sapply(lambdas, function(l){ #supply array of lambda values and run cro
     group_by(userId) %>%
     summarize(movie_eff = sum(rating - user_eff - mean)/(n()+l))
   
-  #calculate predictions and ensure they're in the test set
+  #calculate predictions
   prediction <- test_set %>% 
     left_join(user_avgs, by = "movieId") %>%
     left_join(movie_avgs, by = "userId") %>%
