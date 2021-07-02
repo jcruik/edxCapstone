@@ -70,32 +70,26 @@ date_avgs <- train_set %>%
   left_join(movie_avgs, by = 'movieId') %>%
   left_join(user_avgs, by = 'userId') %>%
   
-  #add column with week of rating
-  mutate(date = as_datetime(timestamp), week = round_date(date, unit = "week")) %>%
+  #add column with year of rating
+  mutate(date = as_datetime(timestamp), year = round_date(date, unit = "year")) %>%
   
-  #calculate the average rating for the week
-  group_by(week) %>%
-  summarize(week_eff = mean(rating-mean-user_eff-movie_eff))
+  #calculate average movie rating above or below the mean for each user and movie, by year
+  group_by(year) %>%
+  summarize(date_eff = mean(rating-mean-user_eff-movie_eff))
   
 
-#plot average weekly rating vs. date
-date_avgs %>% ggplot(aes(week,week_eff)) +
-  geom_point() +
-  geom_smooth(method = "loess", span = 0.5)
-
-#create loess model to predict the effect of week on rating
-date_fit <- loess(date_eff$week_eff ~ as.numeric(date_eff$week, span = 0.5))
+#plot average yearly rating vs. date
+date_avgs %>% ggplot(aes(year,date_eff)) +
+  geom_col()
 
 ##predict ratings using user, movie, and date effects model
-#calculate week from test set timestamps
-test_set_week <- test_set %>%
-  mutate(week = as.numeric(round_date(as_datetime(timestamp), unit = "week")))
+#calculate year from test set timestamps
+test_set_date <- test_set %>%
+  mutate(year = as.numeric(round_date(as_datetime(timestamp), unit = "year")))
 
-#apply date effect function based on week
-test_set_week$date_eff <- predict(date_fit, test_set_week$week)
 
 #calculate predicted rating
-prediction <- test_set_week %>%
+prediction <- test_set_date %>%
   left_join(movie_avgs, by = 'movieId') %>%
   left_join(user_avgs, by = 'userId') %>%
   mutate(pred = mean + user_eff + movie_eff + date_eff) %>%
