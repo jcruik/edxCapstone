@@ -1,7 +1,7 @@
 ###edX Capstone Project - Movielens ratings predictor###
 
 
-#Assume that user begins with edx set and validation set (final hold-out test set). Not including edX provided script to create data sets here.
+#include edX provided script to create data sets here.
 
 #Require and install tidyverse and caret packages
 if (!require(tidyverse))
@@ -47,13 +47,13 @@ mean <- mean(train_set$rating)
 #calculate and average user rating above or below the mean, per movie (the 'movie effect')
 movie_avgs <- train_set %>%
   group_by(movieId) %>%
-  summarize(user_eff = mean(rating - mean))
+  summarize(movie_eff = mean(rating - mean))
 
-#calculate average movie rating above or below the mean for each user, per movie (the 'movie effect')
+#calculate average movie rating above or below the mean, per user (the 'user effect')
 user_avgs <- train_set %>%
   left_join(movie_avgs, by = 'movieId') %>%
   group_by(userId) %>%
-  summarize(movie_eff = mean(rating - mean - user_eff))
+  summarize(user_eff = mean(rating - mean - movie_eff))
 
 #predict ratings using user and movie effects model
 prediction <- test_set %>%
@@ -143,32 +143,54 @@ RMSE(test_set_date$rating, prediction)
 
 ##regularize effects to be conservative when estimating based on small sample sizes
 #create an array of lambda values for tuning algorithm
-lambdas <- seq(0, 10, 0.25)
+lambdas <- seq(0, 10, 1)
 
 #perform cross validation of the regularized user + movie effects model, different values of lambda
 rmses <- sapply(lambdas, function(l){ #supply array of lambda values and run cross validation
   
-  #calculate user effect with each lambda
-  user_avgs <- train_set %>%
+  #calculate movie effect with each lambda
+  movie_avgs <- train_set %>%
     group_by(movieId) %>%
     summarize(user_eff = sum(rating - mean)/(n()+l))
   
-  #calculate movie effect with each lambda
-  movie_avgs <- train_set %>% 
-    left_join(user_avgs, by="movieId") %>%
+  #calculate user effect with each lambda
+  user_avgs <- train_set %>%
+    left_join(movie_avgs, by = 'movieId') %>%
     group_by(userId) %>%
-    summarize(movie_eff = sum(rating - user_eff - mean)/(n()+l))
+    summarize(movie_eff = sum(rating - mean - user_eff)/(n()+l))
+  
+  #calculate date effect with each lambda
+  date_avgs <- train_set %>%
+    left_join(user_avgs, by = 'userId') %>%
+    left_join(movie_avgs, by = 'movieId') %>%
+    mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+    group_by(week) %>%
+    summarize(date_eff = sum(rating-mean-user_eff-movie_eff)/(n()))
+  
+  #calculate genre effect with each lambda
+  genre_avgs <- train_set %>% 
+    left_join(movie_avgs, by = 'movieId') %>%
+    left_join(user_avgs, by = 'userId') %>%
+    mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+    left_join(date_avgs, by = 'week') %>%
+    group_by(genres) %>%
+    summarize(genre_eff = sum(rating-mean-user_eff-movie_eff-date_eff)/(n()))
   
   #calculate predictions
-  prediction <- test_set %>% 
-    left_join(user_avgs, by = "movieId") %>%
-    left_join(movie_avgs, by = "userId") %>%
-    mutate(pred = mean + user_eff + movie_eff) %>%
+  prediction <- test_set %>%
+    mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+    left_join(movie_avgs, by = 'movieId') %>%
+    left_join(user_avgs, by = 'userId') %>%
+    left_join(date_avgs, by = 'week') %>%
+    left_join(genre_avgs, by = 'genres') %>%
+    mutate(pred = mean + user_eff + movie_eff + date_eff + genre_eff) %>%
     .$pred
   
   #return RMSE for each lambda
   return(RMSE(prediction, test_set$rating))
 })
+#plot RMSE against lambda
+qplot(lambdas,rmses)
 
 #select lambda from cross which minimizes RMSE
 l <- lambdas[which.min(rmses)]
@@ -180,11 +202,14 @@ validation_test <- validation %>%
   semi_join(train_set, by = "userId")
 
 #predict ratings for validation set using final model
-validation_predicted_ratings <- validation_test %>%
+validation_predictions <- validation_test %>%
+  mutate(week = round_date(as_datetime(timestamp), unit = "week")) %>%
   left_join(movie_avgs, by = 'movieId') %>%
   left_join(user_avgs, by = 'userId') %>%
-  mutate(prediction = mean + user_eff + movie_eff) %>%
-  .$prediction
+  left_join(date_avgs, by = 'week') %>%
+  left_join(genre_avgs, by = 'genres') %>%
+  mutate(pred = mean + user_eff + movie_eff + date_eff + genre_eff) %>%
+  .$pred
 
 #calculate and print RMSE of final model
-RMSE(validation_predicted_ratings, validation_test$rating)
+RMSE(validation_predictions, validation_test$rating)
