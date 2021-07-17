@@ -1,0 +1,34 @@
+---
+title: "edX MovieLens Project"
+author: "James Cruikshanks"
+date: "7/17/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+source("~/R/edxCapstone/recommender.R", echo=FALSE)
+```
+
+## Introduction
+
+describes the dataset and summarizes the goal of the project and key steps that were performed
+
+```{r cars}
+summary(cars)
+```
+
+## Analysis
+
+explains the process and techniques used, including data cleaning, data exploration and visualization, insights gained, and your modeling approach
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+## Results
+
+presents the modeling results and discusses the model performance
+
+## Conclusions
+
+a brief summary of the report, its limitations and future work
