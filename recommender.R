@@ -8,10 +8,13 @@ if (!require(tidyverse))
   install.packages("tidyverse")
 if (!require(lubridate))
   install.packages("lubridate")
+if (!require(caret))
+  install.packages("caret")
 
 #load required packages to library
 library(tidyverse)
 library(lubridate)
+library(caret)
 
 ##partition the data set created in the provided code into a test set and training set for model training and testing
 #set seed for repeatable randomness
