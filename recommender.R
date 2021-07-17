@@ -22,7 +22,7 @@ set.seed(1, sample.kind = "Rounding")
 
 #create data partition index to split 20% of the edx set into a test set and 80% into a training set
 train_index <- createDataPartition(y = edx$rating,
-                                   p = 0.2,
+                                   p = 0.8,
                                    list = FALSE)
 
 #create partitioned data sets using index
