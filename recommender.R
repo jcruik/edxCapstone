@@ -144,6 +144,13 @@ prediction <- test_set_date %>%
 #calculate the RMSE of the predictions
 user_movie_date_genre_RMSE <- RMSE(test_set_date$rating, prediction)
 
+##plot sample size of each movie, user
+train_set %>%
+  # count(movieId) %>%
+  ggplot() +
+  geom_bar(x = movieId)
+  
+
 ##regularize effects to be conservative when estimating based on small sample sizes
 #create an array of lambda values for tuning algorithm
 lambdas <- seq(0, 10, 1)

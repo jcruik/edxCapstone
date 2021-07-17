@@ -107,6 +107,47 @@ genre_plot +
   ylab("Mean Rating") +
   xlab("Genre")
 ```
+
+There is variation evident that may be modeled by calculating the average difference for each group of genres, after accounting for the other three effects modeled previously. The model is calculated as follows:
+
+```{r genre effect model, echo=FALSE, message=FALSE, warning=FALSE}
+#calculate average impact of genre on user rating of movie
+genre_avgs <- train_set %>%
+  
+  #add column with week of rating
+  mutate(week = round_date(as_datetime(timestamp), unit = "week")) %>%
+  
+  #add user, movie, and date effects
+  left_join(movie_avgs, by = 'movieId') %>%
+  left_join(user_avgs, by = 'userId') %>%
+  left_join(date_avgs,by = 'week') %>%
+  
+  #calculate average movie rating above or below the mean for each user and movie, by genre
+  group_by(genres) %>%
+  summarize(genre_eff = mean(rating-mean-user_eff-movie_eff-date_eff))
+
+#calculate predicted rating
+prediction <- test_set_date %>%
+  left_join(movie_avgs, by = 'movieId') %>%
+  left_join(user_avgs, by = 'userId') %>%
+  left_join(date_avgs, by = 'week') %>%
+  left_join(genre_avgs, by = 'genres') %>%
+  mutate(pred = mean + user_eff + movie_eff + date_eff + genre_eff) %>%
+  .$pred
+```
+
+'The User + Movie + Date + Genre Model' achieves a RMSE of `r user_movie_date_genre_RMSE`, another improvement. Since the available features have been considered in a simple and consistent manner, we move to investigating the predicted results.
+
+The first insight is that there are many movies and users with small sample sizes.
+```{r frequency of ratings, echo=FALSE, message=FALSE, warning=FALSE}
+genre_plot +
+  ylab("Mean Rating") +
+  xlab("Genre")
+```
+
+These can lea 
+
+The next insight is that the highest predicted rating is `r max(prediction)` and the lowest is `r min(prediction)`, which is guaranteed to result in a large error on a scale of 0-5. Adding a floor of 0 and a ceiling of 5 to the predictions is sure to improve the model.
 ## Results
 
 presents the modeling results and discusses the model performance
