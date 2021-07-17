@@ -110,7 +110,7 @@ user_movie_date_RMSE <- RMSE(test_set_date$rating, prediction)
 #plot distribution of ratings by genre
 genre_plot <- train_set %>%
   group_by(genres) %>%
-  filter(n() > 10000) %>%
+  filter(n() > 50000) %>%
   summarise(mean = mean(rating), sd = sd(rating), upper = mean + sd, lower = mean - sd) %>%
   ggplot(aes(genres, mean)) +
   geom_point() +
