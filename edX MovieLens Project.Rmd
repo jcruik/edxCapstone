@@ -6,15 +6,28 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-source("~/R/edxCapstone/recommender.R", echo=FALSE)
+load("~/R/edxCapstone/recommender.RData") #make sure to save the workspace image before running RMD.
+
+#Replace with entire script before submission
+
+library(knitr)
 ```
 
 ## Introduction
 
-describes the dataset and summarizes the goal of the project and key steps that were performed
+Using a large database of movie ratings, this project builds a machine learning model that predicts how a user will rate a given movie. The dataset includes 10 million ratings of more than 10,000 movies by over 72,000 users and can be downloaded from https://grouplens.org/datasets/movielens/10m/. Each rating contains 6 pieces of information: the user ID, the movie Id and title, the timestamp of the rating, and the genre(s) of the film. We can see the data structure by looking at the first few rows:
 
-```{r cars}
-summary(cars)
+```{r raw data, echo=TRUE}
+kable(head(edx))
+```
+
+Using the features present in the dataset, a model is created which is able to approximate and adjust for the effect of each one. How well each movie is liked by all users, how picky each user appears to be by their movie ratings, how well rated each genre appears to be, and even the week a movie was rated all present predictable patterns. These patterns are explored and exploited to predict how any user will rate any movie. The model performance is evaluated by the root mean square error between the predicted ratings and the actual ratings of a partitioned validation dataset, as determined by the following function:
+
+
+```{r RMSE function, echo=TRUE}
+RMSE <- function(actual_ratings, predicted_ratings){
+  sqrt(mean((actual_ratings - predicted_ratings) ^ 2))
+}
 ```
 
 ## Analysis
