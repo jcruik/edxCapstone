@@ -10,6 +10,7 @@ load("~/R/edxCapstone/recommender.RData") #make sure to save the workspace image
 
 #Replace with entire script before submission
 library(tidyverse)
+library(lubridate)
 library(knitr)
 ```
 
@@ -61,7 +62,7 @@ prediction <- test_set %>%
 
 This model takes into account the effect of the movie, as well as the user. Using this model a RMSE of `r user_movie_RMSE` is achieved
 
-Next, the average of all ratings in a given week is calculated across all of the given time stamps.
+Next, the average of all ratings in a given week is calculated across all of the given time stamps and plotted.
 
 ```{r date effect plot, echo=FALSE, message=FALSE, warning=FALSE}
 date_plot +
@@ -96,6 +97,10 @@ prediction <- test_set_date %>%
   mutate(pred = mean + user_eff + movie_eff + date_eff) %>%
   .$pred
 ```
+
+Using this model a RMSE of `r user_movie_date_RMSE` is achieved, a slight improvement.
+
+Next, the average rating by genre is calculated and plotted with the standard error for genres with over 50000 ratings.
 
 ```{r genre effect plot, echo=FALSE, message=FALSE, warning=FALSE}
 genre_plot +
