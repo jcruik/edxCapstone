@@ -243,5 +243,9 @@ prediction <- validation %>%
   mutate(pred = mean + user_eff + movie_eff + date_eff + genre_eff) %>%
   .$pred
 
+#round predictions which are outside the range of the 0-5 scale
+prediction <- pmax(0,prediction)
+prediction <- pmin(5,prediction)
+
 #calculate and print RMSE of final model
 final_model_RMSE <- RMSE(prediction, validation$rating)
