@@ -63,7 +63,7 @@ prediction <- test_set %>%
   .$pred
 
 #calculate the RMSE of the predictions
-RMSE(test_set$rating, prediction)
+user_movie_RMSE <- RMSE(test_set$rating, prediction)
 
 ##add date effect to model
 #plot average weekly rating vs. date
@@ -101,7 +101,7 @@ prediction <- test_set_date %>%
   .$pred
 
 #calculate the RMSE of the predictions
-RMSE(test_set_date$rating, prediction)
+user_movie_date_RMSE <- RMSE(test_set_date$rating, prediction)
 
 ##add genre effect to model
 #plot distribution of ratings by genre
@@ -139,7 +139,7 @@ prediction <- test_set_date %>%
   .$pred
 
 #calculate the RMSE of the predictions
-RMSE(test_set_date$rating, prediction)
+user_movie_date_genre_RMSE <- RMSE(test_set_date$rating, prediction)
 
 ##regularize effects to be conservative when estimating based on small sample sizes
 #create an array of lambda values for tuning algorithm
@@ -195,7 +195,13 @@ qplot(lambdas,rmses)
 #select lambda from cross which minimizes RMSE
 l <- lambdas[which.min(rmses)]
 
+#record minimum RMSE using regularized model
+regularized_RMSE <- min(rmses)
+
 ##calculate final model using entire edx data set
+#calculate the average rating across all movies and users
+mean <- mean(edx$rating)
+
 #calculate movie effect
 movie_avgs <- edx %>%
   group_by(movieId) %>%
@@ -235,4 +241,4 @@ prediction <- validation %>%
   .$pred
 
 #calculate and print RMSE of final model
-RMSE(prediction, validation$rating)
+final_model_RMSE <- RMSE(prediction, validation$rating)
