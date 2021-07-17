@@ -36,7 +36,7 @@ test_set <- test_set %>%
   semi_join(train_set, by = "userId")
 
 #write function to calculate the RMSE between predicted and actual movie ratings
-RMSE <- function(actual_ratings, predicted_ratings) {
+RMSE <- function(actual_ratings, predicted_ratings){
   sqrt(mean((actual_ratings - predicted_ratings) ^ 2))
 }
 
@@ -67,7 +67,7 @@ user_movie_RMSE <- RMSE(test_set$rating, prediction)
 
 ##add date effect to model
 #plot average weekly rating vs. date
-train_set %>% 
+date_plot <- train_set %>% 
   mutate(date = as_datetime(timestamp), week = round_date(date, unit = "week")) %>%
   group_by(week) %>%
   summarise(mean = mean(rating)) %>%
@@ -105,7 +105,7 @@ user_movie_date_RMSE <- RMSE(test_set_date$rating, prediction)
 
 ##add genre effect to model
 #plot distribution of ratings by genre
-train_set %>%
+genre_plot <- train_set %>%
   group_by(genres) %>%
   filter(n() > 10000) %>%
   summarise(mean = mean(rating), sd = sd(rating), upper = mean + sd, lower = mean - sd) %>%
@@ -190,7 +190,7 @@ rmses <- sapply(lambdas, function(l){ #supply array of lambda values and run cro
   return(RMSE(prediction, test_set$rating))
 })
 #plot RMSE against lambda
-qplot(lambdas,rmses)
+lambda_plot <- qplot(lambdas,rmses)
 
 #select lambda from cross which minimizes RMSE
 l <- lambdas[which.min(rmses)]
