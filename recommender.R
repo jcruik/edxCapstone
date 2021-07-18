@@ -157,6 +157,7 @@ movie_count <- train_set %>%
 movie_count_plot <- movie_count %>%
   ggplot(aes(n)) +
   geom_histogram(binwidth = 20) +
+  ggtitle("Movies") +
   xlim(c(0,1000))
 
 #count ratings by user
@@ -167,6 +168,7 @@ user_count <- train_set %>%
 user_count_plot <- user_count %>%
   ggplot(aes(n)) +
   geom_histogram(binwidth = 20) +
+  ggtitle("Users") +
   xlim(c(0,1000))
 
 ##regularize effects to be conservative when estimating based on small sample sizes
