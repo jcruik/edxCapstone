@@ -155,11 +155,9 @@ movie_count <- train_set %>%
 
 #plot ratings by movie
 movie_count_plot <- movie_count %>%
-  ggplot(aes(reorder(movieId, -n), n)) +
-  geom_col() +
-  xlab("Movie") +
-  ylab("Number of Ratings") +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+  ggplot(aes(n)) +
+  geom_histogram(binwidth = 20) +
+  xlim(c(0,1000))
 
 #count ratings by user
 user_count <- train_set %>%
@@ -167,12 +165,9 @@ user_count <- train_set %>%
 
 #plot ratings by user
 user_count_plot <- user_count %>%
-  ggplot(aes(reorder(userId, -n), n)) +
-  geom_col() +
-  xlab("User") +
-  ylab("Number of Ratings") +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
-  ylim(c(0, 2000))
+  ggplot(aes(n)) +
+  geom_histogram(binwidth = 20) +
+  xlim(c(0,1000))
 
 ##regularize effects to be conservative when estimating based on small sample sizes
 #create an array of lambda values for tuning algorithm
