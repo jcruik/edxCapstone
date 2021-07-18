@@ -153,21 +153,23 @@ user_movie_date_genre_RMSE <- RMSE(test_set_date$rating, prediction)
 movie_count <- train_set %>%
   count(movieId)
 
-#plot ratings by movie
+#plot the frequency of ratings, by movie
 movie_count_plot <- movie_count %>%
   ggplot(aes(n)) +
   geom_histogram(binwidth = 20) +
   ggtitle("Movies") +
+  xlab("Number of Ratings") +
   xlim(c(0,1000))
 
 #count ratings by user
 user_count <- train_set %>%
   count(userId)
 
-#plot ratings by user
+#plot the frequency of ratings, by user
 user_count_plot <- user_count %>%
   ggplot(aes(n)) +
   geom_histogram(binwidth = 20) +
+  xlab("Number of Ratings") +
   ggtitle("Users") +
   xlim(c(0,1000))
 
