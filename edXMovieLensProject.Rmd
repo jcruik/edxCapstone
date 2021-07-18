@@ -64,10 +64,8 @@ This model takes into account the effect of the movie, as well as the user. Usin
 
 Next, the average of all ratings in a given week is calculated across all of the given time stamps and plotted.
 
-```{r date effect plot, echo=FALSE, message=FALSE, warning=FALSE}
-date_plot +
-  ylab("Mean Rating") +
-  xlab("Week")
+```{r date effect plot, echo=FALSE, fig.height=3, message=FALSE, warning=FALSE}
+date_plot
 ```
 
 The plot shows a trend that can then be integrated into a new model called 'The User + Movie + Date Effect Model' as follows:
@@ -103,14 +101,12 @@ Using this model a RMSE of `r user_movie_date_RMSE` is achieved, a slight improv
 Next, the average rating by genre is calculated and plotted with the standard error for genres with over 50000 ratings.
 
 ```{r genre effect plot, echo=FALSE, message=FALSE, warning=FALSE}
-genre_plot +
-  ylab("Mean Rating") +
-  xlab("Genre")
+genre_plot
 ```
 
 There is variation evident that may be modeled by calculating the average difference for each group of genres, after accounting for the other three effects modeled previously. The model is calculated as follows:
 
-```{r genre effect model, echo=FALSE, message=FALSE, warning=FALSE}
+```{r genre effect model, echo=TRUE, message=FALSE, warning=FALSE}
 #calculate average impact of genre on user rating of movie
 genre_avgs <- train_set %>%
   
@@ -139,15 +135,62 @@ prediction <- test_set_date %>%
 'The User + Movie + Date + Genre Model' achieves a RMSE of `r user_movie_date_genre_RMSE`, another improvement. Since the available features have been considered in a simple and consistent manner, we move to investigating the predicted results.
 
 The first insight is that there are many movies and users with small sample sizes.
-```{r frequency of ratings, echo=FALSE, message=FALSE, warning=FALSE}
-genre_plot +
-  ylab("Mean Rating") +
-  xlab("Genre")
+
+```{r frequency of ratings, echo=FALSE, fig.height=3, fig.width=3, message=FALSE, warning=FALSE}
+movie_count_plot
+user_count_plot
 ```
 
-These can lea 
+These can lead to high or low predictions based on small sample sizes, when a more conservative estimate closer to the mean rating of all movies would be preferable. To achieve this outcome in the model we use regularization, which is calculated with a given lambda value as follows:
+
+```{r regularized model, echo=FALSE, message=FALSE, warning=FALSE}
+##regularize effects to be conservative when estimating based on small sample sizes
+#calculate movie effect with each lambda
+movie_avgs <- train_set %>%
+  group_by(movieId) %>%
+  summarize(user_eff = sum(rating - mean)/(n()+l))
+
+#calculate user effect with each lambda
+user_avgs <- train_set %>%
+  left_join(movie_avgs, by = 'movieId') %>%
+  group_by(userId) %>%
+  summarize(movie_eff = sum(rating - mean - user_eff)/(n()+l))
+
+#calculate date effect with each lambda
+date_avgs <- train_set %>%
+  left_join(user_avgs, by = 'userId') %>%
+  left_join(movie_avgs, by = 'movieId') %>%
+  mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+  group_by(week) %>%
+  summarize(date_eff = sum(rating-mean-user_eff-movie_eff)/(n()+l))
+
+#calculate genre effect with each lambda
+genre_avgs <- train_set %>% 
+  left_join(movie_avgs, by = 'movieId') %>%
+  left_join(user_avgs, by = 'userId') %>%
+  mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+  left_join(date_avgs, by = 'week') %>%
+  group_by(genres) %>%
+  summarize(genre_eff = sum(rating-mean-user_eff-movie_eff-date_eff)/(n()+l))
+
+#calculate predictions
+prediction <- test_set %>%
+  mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+  left_join(movie_avgs, by = 'movieId') %>%
+  left_join(user_avgs, by = 'userId') %>%
+  left_join(date_avgs, by = 'week') %>%
+  left_join(genre_avgs, by = 'genres') %>%
+  mutate(pred = mean + user_eff + movie_eff + date_eff + genre_eff) %>%
+  .$pred
+```
+
+Lambda can be tuned using cross validation. The results of this are plotted below:
+```{r lambda plot, echo=FALSE, fig.align = "center", fig.height=3, fig.width=5, message=FALSE, warning=FALSE}
+lambda_plot
+```
 
 The next insight is that the highest predicted rating is `r max(prediction)` and the lowest is `r min(prediction)`, which is guaranteed to result in a large error on a scale of 0-5. Adding a floor of 0 and a ceiling of 5 to the predictions is sure to improve the model.
+
 ## Results
 
 presents the modeling results and discusses the model performance
