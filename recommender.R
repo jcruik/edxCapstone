@@ -145,11 +145,30 @@ prediction <- test_set_date %>%
 user_movie_date_genre_RMSE <- RMSE(test_set_date$rating, prediction)
 
 ##plot sample size of each movie, user
-train_set %>%
-  # count(movieId) %>%
-  ggplot() +
-  geom_bar(x = movieId)
-  
+#count ratings by movie
+movie_count <- train_set %>%
+  count(movieId)
+
+#plot ratings by movie
+movie_count_plot <- movie_count %>%
+  ggplot(aes(reorder(movieId, -n), n)) +
+  geom_col() +
+  xlab("Movie") +
+  ylab("Number of Ratings") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+#count ratings by user
+user_count <- train_set %>%
+  count(userId)
+
+#plot ratings by user
+user_count_plot <- user_count %>%
+  ggplot(aes(reorder(userId, -n), n)) +
+  geom_col() +
+  xlab("User") +
+  ylab("Number of Ratings") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  ylim(c(0, 2000))
 
 ##regularize effects to be conservative when estimating based on small sample sizes
 #create an array of lambda values for tuning algorithm
