@@ -76,7 +76,9 @@ date_plot <- train_set %>%
   summarise(mean = mean(rating)) %>%
   ggplot(aes(week,mean)) +
   geom_point() +
-  geom_smooth()
+  geom_smooth() +
+  ylab("Mean Rating") +
+  xlab("Week")
 
 #approximate linear model to calculate the effect of date on user, movie rating
 date_avgs <- train_set %>%
@@ -115,7 +117,9 @@ genre_plot <- train_set %>%
   ggplot(aes(genres, mean)) +
   geom_point() +
   geom_errorbar(aes(ymin = lower, ymax = upper)) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  ylab("Mean Rating") +
+  xlab("Genre")
 
 #calculate average impact of genre on user rating of movie
 genre_avgs <- train_set %>%
@@ -192,7 +196,7 @@ rmses <- sapply(lambdas, function(l){ #supply array of lambda values and run cro
   date_avgs <- train_set %>%
     left_join(user_avgs, by = 'userId') %>%
     left_join(movie_avgs, by = 'movieId') %>%
-    mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+    mutate(week = round_date(as_datetime(timestamp), unit = "week")) %>%
     group_by(week) %>%
     summarize(date_eff = sum(rating-mean-user_eff-movie_eff)/(n()+l))
   
@@ -200,14 +204,14 @@ rmses <- sapply(lambdas, function(l){ #supply array of lambda values and run cro
   genre_avgs <- train_set %>% 
     left_join(movie_avgs, by = 'movieId') %>%
     left_join(user_avgs, by = 'userId') %>%
-    mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+    mutate(week = round_date(as_datetime(timestamp), unit = "week")) %>%
     left_join(date_avgs, by = 'week') %>%
     group_by(genres) %>%
     summarize(genre_eff = sum(rating-mean-user_eff-movie_eff-date_eff)/(n()+l))
   
   #calculate predictions
   prediction <- test_set %>%
-    mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+    mutate(week = round_date(as_datetime(timestamp), unit = "week")) %>%
     left_join(movie_avgs, by = 'movieId') %>%
     left_join(user_avgs, by = 'userId') %>%
     left_join(date_avgs, by = 'week') %>%
@@ -221,7 +225,7 @@ rmses <- sapply(lambdas, function(l){ #supply array of lambda values and run cro
 #plot RMSE against lambda
 lambda_plot <- qplot(lambdas,rmses)
 
-#select lambda from cross which minimizes RMSE
+#select lambda from cross validation which minimizes RMSE
 l <- lambdas[which.min(rmses)]
 
 #record minimum RMSE using regularized model
@@ -246,7 +250,7 @@ user_avgs <- edx %>%
 date_avgs <- edx %>%
   left_join(user_avgs, by = 'userId') %>%
   left_join(movie_avgs, by = 'movieId') %>%
-  mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+  mutate(week = round_date(as_datetime(timestamp), unit = "week")) %>%
   group_by(week) %>%
   summarize(date_eff = sum(rating-mean-user_eff-movie_eff)/(n()+l))
 
@@ -254,14 +258,14 @@ date_avgs <- edx %>%
 genre_avgs <- edx %>% 
   left_join(movie_avgs, by = 'movieId') %>%
   left_join(user_avgs, by = 'userId') %>%
-  mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+  mutate(week = round_date(as_datetime(timestamp), unit = "week")) %>%
   left_join(date_avgs, by = 'week') %>%
   group_by(genres) %>%
   summarize(genre_eff = sum(rating-mean-user_eff-movie_eff-date_eff)/(n()+l))
 
 #predict ratings for validation set using final model
 prediction <- validation %>%
-  mutate(week = round_date(as_datetime(timestamp), unit = "year")) %>%
+  mutate(week = round_date(as_datetime(timestamp), unit = "week")) %>%
   left_join(movie_avgs, by = 'movieId') %>%
   left_join(user_avgs, by = 'userId') %>%
   left_join(date_avgs, by = 'week') %>%
