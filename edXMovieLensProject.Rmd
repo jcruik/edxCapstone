@@ -134,16 +134,15 @@ prediction <- test_set_date %>%
 
 'The User + Movie + Date + Genre Model' achieves a RMSE of `r user_movie_date_genre_RMSE`, another improvement. Since the available features have been considered in a simple and consistent manner, we move to investigating the predicted results.
 
-The first insight is that there are many movies and users with small sample sizes.
+The first insight is that most movies and users have small sample sizes.
 
-```{r frequency of ratings, echo=FALSE, fig.height=3, fig.width=3, message=FALSE, warning=FALSE}
+```{r frequency of ratings, echo=FALSE, fig.height=3, fig.width=3.25, message=FALSE, warning=FALSE}
 movie_count_plot
 user_count_plot
 ```
+These can lead to overconfident high or low predictions, when a more conservative estimate closer to the mean rating of all movies would be preferable. To achieve this outcome in the model we use regularization, which is calculated with a given lambda value as follows:
 
-These can lead to high or low predictions based on small sample sizes, when a more conservative estimate closer to the mean rating of all movies would be preferable. To achieve this outcome in the model we use regularization, which is calculated with a given lambda value as follows:
-
-```{r regularized model, echo=FALSE, message=FALSE, warning=FALSE}
+```{r regularized model, echo=TRUE, message=FALSE, warning=FALSE}
 ##regularize effects to be conservative when estimating based on small sample sizes
 #calculate movie effect with each lambda
 movie_avgs <- train_set %>%
@@ -184,12 +183,12 @@ prediction <- test_set %>%
   .$pred
 ```
 
-Lambda can be tuned using cross validation. The results of this are plotted below:
+Lambda can be tuned using cross validation. The results of this are plotted below, where the optimal lambda of 5 is evident:
 ```{r lambda plot, echo=FALSE, fig.align = "center", fig.height=3, fig.width=5, message=FALSE, warning=FALSE}
 lambda_plot
 ```
 
-The next insight is that the highest predicted rating is `r max(prediction)` and the lowest is `r min(prediction)`, which is guaranteed to result in a large error on a scale of 0-5. Adding a floor of 0 and a ceiling of 5 to the predictions is sure to improve the model.
+The next insight is that the highest predicted rating is `r max(prediction)` and the lowest is `r min(prediction)`, which is guaranteed to result in an error on a scale of 0-5. Adding a floor of 0 and a ceiling of 5 to the predictions is sure to improve the model.
 
 ## Results
 
