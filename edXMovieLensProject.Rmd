@@ -140,7 +140,7 @@ The first insight is that most movies and users have small sample sizes.
 movie_count_plot
 user_count_plot
 ```
-These can lead to overconfident high or low predictions, when a more conservative estimate closer to the mean rating of all movies would be preferable. To achieve this outcome in the model we use regularization, which is calculated with a given lambda value as follows:
+These can lead to overconfident high or low predictions, when a more conservative estimate closer to the mean rating of all movies would be preferable. To model this outcome we regularize each of the four effects, which is calculated as follows:
 
 ```{r regularized model, echo=TRUE, message=FALSE, warning=FALSE}
 ##regularize effects to be conservative when estimating based on small sample sizes
@@ -183,7 +183,7 @@ prediction <- test_set %>%
   .$pred
 ```
 
-Lambda can be tuned using cross validation. The results of this are plotted below, where the optimal lambda of 5 is evident:
+Lambda can be tuned using cross validation. The results of this are plotted below, where the optimal lambda of 5 produces a model with the lowest RMSE:
 ```{r lambda plot, echo=FALSE, fig.align = "center", fig.height=3, fig.width=5, message=FALSE, warning=FALSE}
 lambda_plot
 ```
