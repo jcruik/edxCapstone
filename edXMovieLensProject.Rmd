@@ -183,7 +183,7 @@ prediction <- test_set %>%
   .$pred
 ```
 
-Lambda can be tuned using cross validation. The results of this are plotted below, where the optimal lambda of 5 produces a model with the lowest RMSE:
+Lambda can be tuned using cross validation. The results of this are plotted below, where the optimal lambda of 5 produces a model with the lowest RMSE, `r regularized_RMSE`:
 ```{r lambda plot, echo=FALSE, fig.align = "center", fig.height=3, fig.width=5, message=FALSE, warning=FALSE}
 lambda_plot
 ```
