@@ -35,10 +35,21 @@ remove(dl, reds, whites)
 summary(wine_quality)
 hist(wine_quality)
 
+#add distributions, faceted would be ideal
+#Add box plots by quality
+
 #correlations
-correlations <- cor(wine_quality %>% select(-c(quality,colour)))
+correlations <- cor(wine_quality %>% select(-colour) %>% mutate(quality = as.numeric(quality)))
 #plot correlations on heatmap
 col<- colorRampPalette(c("blue", "white", "red"))(20) #set heatmap colour palette
 heatmap(x = correlations, col = col, symm = TRUE)
 
+#plot groupings of any sort within correlated features (alcohol, citric acid, pH, sulphur dioxide)
+
+##train model
+#partition data
+
+#decision tree algorithm
+
+#random forest classification
 
