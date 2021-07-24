@@ -18,10 +18,14 @@ output: pdf_document
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
 if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
+if(!require(lubridate)) install.packages("lubridate", repos = "http://cran.us.r-project.org")
+if(!require(knitr)) install.packages("knitr", repos = "http://cran.us.r-project.org")
 
 library(tidyverse)
 library(caret)
 library(data.table)
+library(lubridate)
+library(knitr)
 
 # MovieLens 10M dataset:
 # https://grouplens.org/datasets/movielens/10m/
@@ -344,10 +348,7 @@ final_model_RMSE <- RMSE(prediction, validation$rating)
 #set the number of digits for rounding
 options(digits = 5)
 
-#install and load knitr if not already in library
-if (!require(knitr))
-  install.packages("knitr")
-library(knitr)
+
 ```
 
 ## Introduction
