@@ -64,32 +64,34 @@ wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
 
 #Plot density plots by colour across features. We expect colour to be important to classify.
 wine_quality %>%
-  select(-quality) %>%
-  pivot_longer(cols = 1:11) %>%
+  pivot_longer(cols = 1:12) %>%
   ggplot(aes(value, colour = colour)) +
   facet_wrap(~ name, scales = "free") +
   geom_density()
 
-#Plot density plots by assigned quality level across features
+#Plot density plots by assigned quality level across features for red wine
 wine_quality %>%
   select(-quality) %>%
+  filter(colour == "red") %>%
   pivot_longer(cols = 1:11) %>%
   ggplot(aes(value, colour = quality.lvl)) +
   facet_wrap(~ name, scales = "free") +
-  geom_density()
+  geom_density() +
+  ggtitle("Red Wines")
+
+#Plot density plots by assigned quality level across features for white wine
+wine_quality %>%
+  select(-quality) %>%
+  filter(colour == "white") %>%
+  pivot_longer(cols = 1:11) %>%
+  ggplot(aes(value, colour = quality.lvl)) +
+  facet_wrap(~ name, scales = "free") +
+  geom_density() +
+  ggtitle("White Wines")
 
 #density. higher alcohol means lower density
-wine_quality %>% ggplot(aes(density, colour = quality.lvl)) +
-  geom_density()
-
 #alcohol (long tail)
-wine_quality %>% ggplot(aes(alcohol, colour = quality.lvl)) +
-  geom_density()
-
 #residual sugar (long tail)
-wine_quality %>%
-  ggplot(aes(residual.sugar, colour = quality.lvl)) +
-  geom_density()
 
 ##Train model
 #partition data
