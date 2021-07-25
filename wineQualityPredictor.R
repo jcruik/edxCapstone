@@ -2,15 +2,15 @@
 ##Load required packages
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
+if(!require(rborist)) install.packages("Rborist", repos = "http://cran.us.r-project.org")
 
 library(tidyverse)
 library(caret)
+library(Rborist)
 
 
 ##Wrangle wine quality data
-
-#data located at the following URL
-#http://www3.dsi.uminho.pt/pcortez/wine/winequality.zip
+##data located here: http://www3.dsi.uminho.pt/pcortez/wine/winequality.zip
 
 #download zip file
 dl <- tempfile()
@@ -24,7 +24,7 @@ whites <- read.csv(unzip(dl,"winequality/winequality-white.csv"), sep = ";")
 reds <- reds %>% mutate(colour = as.factor("red"))
 whites <- whites %>% mutate(colour = as.factor("white"))
 
-#merge data into one dataframe
+#merge data
 wine_quality <- bind_rows(reds, whites)
 
 #remove temp files
@@ -35,18 +35,53 @@ remove(dl, reds, whites)
 summary(wine_quality)
 hist(wine_quality)
 
-#add distributions, faceted would be ideal
-#Add box plots by quality
+#observe distributions
+sweep(wine_quality,)
+ggplot(stack(wine_quality), aes(x = ind, y = values)) +
+  geom_boxplot()
+
+#normalize using z-transform and observe
+wine_quality_scaled <- wine_quality %>%
+  select(-colour) %>%
+  scale(.) %>%
+  as.data.frame(.)
+#plot
+ggplot(stack(wine_quality_scaled), aes(x = ind, y = values, colour = ind)) +
+  geom_boxplot(show.legend = FALSE)
+
+##histograms of interesting features
+#quality (low prevalence of low/high quality wines)
+wine_quality %>% ggplot(aes(quality)) +
+  geom_histogram()
+
+#Group quality into high, med, and low
+wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
+                                         low = c("3","4"),
+                                         med = c("5","6"),
+                                         high = c("7","8","9"))
+
+#density
+wine_quality %>% ggplot(aes(density, colour = quality.lvl)) +
+  geom_density()
+
+#alcohol (long tail)
+wine_quality %>% ggplot(aes(alcohol, colour = quality.lvl)) +
+  geom_de()
+
+#residual sugar (long tail)
+wine_quality %>%
+  ggplot(aes(residual.sugar, colour = quality.lvl)) +
+  geom_density()
 
 #correlations
-correlations <- cor(wine_quality %>% select(-colour) %>% mutate(quality = as.numeric(quality)))
+correlations <- cor(wine_quality %>% select(-colour))
 #plot correlations on heatmap
 col<- colorRampPalette(c("blue", "white", "red"))(20) #set heatmap colour palette
 heatmap(x = correlations, col = col, symm = TRUE)
 
-#plot groupings of any sort within correlated features (alcohol, citric acid, pH, sulphur dioxide)
+#Add box plots by quality on correlated features (alcohol, citric acid, pH, sulphur dioxide)
 
-##train model
+##Train model
 #partition data
 
 #decision tree algorithm
