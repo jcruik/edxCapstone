@@ -33,21 +33,30 @@ remove(dl, reds, whites)
 ##Explore data
 #summary stats
 summary(wine_quality)
-hist(wine_quality)
 
 #observe distributions
-sweep(wine_quality,)
-ggplot(stack(wine_quality), aes(x = ind, y = values)) +
-  geom_boxplot()
+wine_quality %>%
+  keep(is.numeric) %>%
+  pivot_longer(cols = everything()) %>%
+  ggplot(aes(value)) +
+  facet_wrap(~ name, scales = "free") +
+  geom_histogram()
 
-#normalize using z-transform and observe
-wine_quality_scaled <- wine_quality %>%
-  select(-colour) %>%
-  scale(.) %>%
-  as.data.frame(.)
-#plot
-ggplot(stack(wine_quality_scaled), aes(x = ind, y = values, colour = ind)) +
-  geom_boxplot(show.legend = FALSE)
+#No longer needed with free scales
+    # #normalize using z-transform and observe
+    # wine_quality_scaled <- wine_quality %>%
+    #   select(-colour) %>%
+    #   scale(.) %>%
+    #   as.data.frame(.)
+    # #plot
+    # wine_quality_scaled %>%
+    #   keep(is.numeric) %>%
+    #   gather() %>%
+    #   ggplot(aes(value)) +
+    #   facet_wrap(~ key) +
+    #   geom_histogram()
+    # # ggplot(stack(wine_quality_scaled), aes(x = ind, y = values, colour = ind)) +
+    # #   geom_boxplot(show.legend = FALSE)
 
 #calculate correlations between features
 correlations <- cor(wine_quality %>% keep(is.numeric))
@@ -56,6 +65,7 @@ col<- colorRampPalette(c("blue", "white", "red"))(20) #set heatmap colour palett
 heatmap(x = correlations, col = col, symm = TRUE)
 
 ##histograms of interesting features
+
 #quality (low prevalence of low/high quality wines)
 wine_quality %>% ggplot(aes(quality)) +
   geom_histogram()
@@ -67,8 +77,11 @@ wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
                                          high = c("7","8","9"))
 
 #Plot density plots by quality across features
-hist(wine_quality %>% select(-colour, -quality, -quality.lvl))
-
+wine_quality %>%
+  keep(is.numeric) %>%
+  ggplot(aes(value)) +
+  facet_wrap(~ quality.lvl, scales = "free") +
+  geom_histogram()
 
 #density. higher alcohol means lower density
 wine_quality %>% ggplot(aes(density, colour = quality.lvl)) +
