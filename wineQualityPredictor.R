@@ -49,6 +49,12 @@ wine_quality_scaled <- wine_quality %>%
 ggplot(stack(wine_quality_scaled), aes(x = ind, y = values, colour = ind)) +
   geom_boxplot(show.legend = FALSE)
 
+#calculate correlations between features
+correlations <- cor(wine_quality %>% keep(is.numeric))
+#plot correlations on heatmap
+col<- colorRampPalette(c("blue", "white", "red"))(20) #set heatmap colour palette
+heatmap(x = correlations, col = col, symm = TRUE)
+
 ##histograms of interesting features
 #quality (low prevalence of low/high quality wines)
 wine_quality %>% ggplot(aes(quality)) +
@@ -59,6 +65,10 @@ wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
                                          low = c("3","4"),
                                          med = c("5","6"),
                                          high = c("7","8","9"))
+
+#Plot density plots by quality across features
+hist(wine_quality %>% select(-colour, -quality, -quality.lvl))
+
 
 #density. higher alcohol means lower density
 wine_quality %>% ggplot(aes(density, colour = quality.lvl)) +
@@ -73,13 +83,10 @@ wine_quality %>%
   ggplot(aes(residual.sugar, colour = quality.lvl)) +
   geom_density()
 
-#correlations
-correlations <- cor(wine_quality %>% select(-colour))
-#plot correlations on heatmap
-col<- colorRampPalette(c("blue", "white", "red"))(20) #set heatmap colour palette
-heatmap(x = correlations, col = col, symm = TRUE)
-
 #Add box plots by quality on correlated features (alcohol, citric acid, pH, sulphur dioxide)
+wine_quality %>%
+  ggplot(aes(volatile.acidity, colour = quality.lvl)) +
+  geom_density()
 
 ##Train model
 #partition data
