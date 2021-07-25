@@ -1,8 +1,8 @@
 ###Vinho Verde Quality Predictor
 ##Load required packages
-if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
-if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
-if(!require(rborist)) install.packages("Rborist", repos = "http://cran.us.r-project.org")
+if(!require(tidyverse)) install.packages("tidyverse")
+if(!require(caret)) install.packages("caret")
+if(!require(Rborist)) install.packages("Rborist")
 
 library(tidyverse)
 library(caret)
@@ -42,33 +42,19 @@ wine_quality %>%
   facet_wrap(~ name, scales = "free") +
   geom_histogram()
 
-#No longer needed with free scales
-    # #normalize using z-transform and observe
-    # wine_quality_scaled <- wine_quality %>%
-    #   select(-colour) %>%
-    #   scale(.) %>%
-    #   as.data.frame(.)
-    # #plot
-    # wine_quality_scaled %>%
-    #   keep(is.numeric) %>%
-    #   gather() %>%
-    #   ggplot(aes(value)) +
-    #   facet_wrap(~ key) +
-    #   geom_histogram()
-    # # ggplot(stack(wine_quality_scaled), aes(x = ind, y = values, colour = ind)) +
-    # #   geom_boxplot(show.legend = FALSE)
+#quality (low prevalence of low/high quality wines)
+#total sulphur bimodal
+#density uniform
+#long tails on many
 
 #calculate correlations between features
 correlations <- cor(wine_quality %>% keep(is.numeric))
+
 #plot correlations on heatmap
 col<- colorRampPalette(c("blue", "white", "red"))(20) #set heatmap colour palette
 heatmap(x = correlations, col = col, symm = TRUE)
 
-##histograms of interesting features
-
-#quality (low prevalence of low/high quality wines)
-wine_quality %>% ggplot(aes(quality)) +
-  geom_histogram()
+#alcohol, density, and volatile.acid appear most correlated with quality
 
 #Group quality into high, med, and low
 wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
@@ -76,12 +62,21 @@ wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
                                          med = c("5","6"),
                                          high = c("7","8","9"))
 
-#Plot density plots by quality across features
+#Plot density plots by colour across features. We expect colour to be important to classify.
 wine_quality %>%
-  keep(is.numeric) %>%
-  ggplot(aes(value)) +
-  facet_wrap(~ quality.lvl, scales = "free") +
-  geom_histogram()
+  select(-quality) %>%
+  pivot_longer(cols = 1:11) %>%
+  ggplot(aes(value, colour = colour)) +
+  facet_wrap(~ name, scales = "free") +
+  geom_density()
+
+#Plot density plots by assigned quality level across features
+wine_quality %>%
+  select(-quality) %>%
+  pivot_longer(cols = 1:11) %>%
+  ggplot(aes(value, colour = quality.lvl)) +
+  facet_wrap(~ name, scales = "free") +
+  geom_density()
 
 #density. higher alcohol means lower density
 wine_quality %>% ggplot(aes(density, colour = quality.lvl)) +
@@ -94,11 +89,6 @@ wine_quality %>% ggplot(aes(alcohol, colour = quality.lvl)) +
 #residual sugar (long tail)
 wine_quality %>%
   ggplot(aes(residual.sugar, colour = quality.lvl)) +
-  geom_density()
-
-#Add box plots by quality on correlated features (alcohol, citric acid, pH, sulphur dioxide)
-wine_quality %>%
-  ggplot(aes(volatile.acidity, colour = quality.lvl)) +
   geom_density()
 
 ##Train model
