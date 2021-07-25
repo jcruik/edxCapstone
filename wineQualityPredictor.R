@@ -60,13 +60,13 @@ wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
                                          med = c("5","6"),
                                          high = c("7","8","9"))
 
-#density
+#density. higher alcohol means lower density
 wine_quality %>% ggplot(aes(density, colour = quality.lvl)) +
   geom_density()
 
 #alcohol (long tail)
 wine_quality %>% ggplot(aes(alcohol, colour = quality.lvl)) +
-  geom_de()
+  geom_density()
 
 #residual sugar (long tail)
 wine_quality %>%
