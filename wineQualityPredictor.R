@@ -2,12 +2,13 @@
 ##Load required packages
 if(!require(tidyverse)) install.packages("tidyverse")
 if(!require(caret)) install.packages("caret")
-if(!require(Rborist)) install.packages("Rborist")
+if(!require(rpart)) install.packages("rpart")
+if(!require(randomForest)) install.packages("randomForest")
 
 library(tidyverse)
 library(caret)
-library(Rborist)
-
+library(rpart)
+library(randomForest)
 
 ##Wrangle wine quality data
 ##data located here: http://www3.dsi.uminho.pt/pcortez/wine/winequality.zip
@@ -94,9 +95,52 @@ wine_quality %>%
 #residual sugar (long tail)
 
 ##Train model
-#partition data
+#repeatable randomness
+set.seed(1, kind = "Rounding")
+#create data partition index to split 20% of the edx set into a test set and 80% into a training set
+train_index <- createDataPartition(y = wine_quality$quality.lvl,
+                                   p = 0.8,
+                                   list = FALSE)
 
-#decision tree algorithm
+#create partitioned data sets using index
+train_set <- wine_quality[train_index,] %>% select(-quality) #remove quality as a predictor
+test_set <- wine_quality[-train_index,] %>% select(-quality) #remove quality as a predictor
+
+#fit decision tree algorithm. Using ROC
+fit_dt <- train(quality.lvl ~ .,
+                method = "rpart",
+                metric = "Kappa",
+                data = train_set)
+
+#plot the decision tree
+plot(fit_dt$finalModel, margin = 0.1)
+text(fit_dt$finalModel, cex = 0.75)
+
+#not identifying low quality wines is a problem for a winemaker. increasing weights of low quality wines based on their prevelance
+positiveWeight = 3.0 / (nrow(subset(train_set, quality.lvl == "low")) / nrow(train_set))
+negativeWeight = 1.0 / (nrow(subset(train_set, quality.lvl %in% c("med", "high"))) / nrow(train_set))
+
+#create weighting index
+weights_dt <- ifelse(train_set$quality.lvl == "low", positiveWeight, negativeWeight)
+
+#create weighted decision tree model
+fit_dt_weighted <- train(quality.lvl ~ .,
+                         method = "rpart",
+                         metric = "Kappa",
+                         weights = weights_dt,
+                         data = train_set)
+
+#plot decision tree created with weighted observations
+plot(fit_dt_weighted$finalModel, margin = 0.1)
+text(fit_dt_weighted$finalModel, cex = 0.75)
+
+#print results of cross validation
+fit_dt_weighted
 
 #random forest classification
+
+
+#tune with cross validation
+
+#varImp
 
