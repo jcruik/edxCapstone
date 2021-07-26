@@ -96,7 +96,7 @@ wine_quality %>%
 
 ##Train model
 #repeatable randomness
-set.seed(1, kind = "Rounding")
+set.seed(1, sample.kind = "Rounding")
 #create data partition index to split 20% of the edx set into a test set and 80% into a training set
 train_index <- createDataPartition(y = wine_quality$quality.lvl,
                                    p = 0.8,
@@ -123,10 +123,11 @@ negativeWeight = 1.0 / (nrow(subset(train_set, quality.lvl %in% c("med", "high")
 #create weighting index
 weights_dt <- ifelse(train_set$quality.lvl == "low", positiveWeight, negativeWeight)
 
-#create weighted decision tree model
+#create weighted decision tree model with many complexity parameters
 fit_dt_weighted <- train(quality.lvl ~ .,
                          method = "rpart",
                          metric = "Kappa",
+                         tuneGrid = data.frame(cp = seq(0.02, 0.05, len = 10)),
                          weights = weights_dt,
                          data = train_set)
 
@@ -136,22 +137,42 @@ text(fit_dt_weighted$finalModel, cex = 0.75)
 
 #print results of cross validation
 fit_dt_weighted
+ggplot(fit_dt_weighted)
 
 ##Evaluate on test set
 #compute modeled predictions
 pred_dt_weighted <- predict(fit_dt_weighted,test_set)
 
-#calculate confusion matrix
-
-
 #print confusion matrix for model evaluation
 cm_dt_weighted <- confusionMatrix(pred_dt_weighted, test_set$quality.lvl)
 cm_dt_weighted[["byClass"]][ , "F1"]
 
-#random forest classification
+#weighted model might be more useful to a winemaker looking to avoid a poor product, where the non-weighted model would be better for a high quality producer looking for their best wine
 
+##Use random forest to overcome the inflexibility of a single tree
+#set tuning parameters to reduce computation time
+tunegrid <- expand.grid(.ntree=10)
 
-#tune with cross validation
+fit_rf <- train(quality.lvl ~ .,
+                method = "rf",
+                metric = "Kappa",
+                tunegrid = tunegrid,
+                data = train_set)
+
+ggplot(fit_rf)
+#plot decision tree created with weighted observations
+plot(fit_rf$finalModel, margin = 0.1)
+
+#print results of cross validation
+fit_rf
+
+##Evaluate on test set
+#compute modeled predictions
+pred_rf <- predict(fit_rf,test_set)
+
+#print confusion matrix for model evaluation
+cm_dt_weighted <- confusionMatrix(pred_rf, test_set$quality.lvl)
+cm_dt_weighted[["byClass"]][ , "F1"]
 
 #varImp
 
