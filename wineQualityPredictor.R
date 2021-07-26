@@ -106,7 +106,7 @@ train_index <- createDataPartition(y = wine_quality$quality.lvl,
 train_set <- wine_quality[train_index,] %>% select(-quality) #remove quality as a predictor
 test_set <- wine_quality[-train_index,] %>% select(-quality) #remove quality as a predictor
 
-#fit decision tree algorithm. Using Kappa because of the low prevelance of high and low quality wines
+#fit decision tree algorithm. Using Kappa because of the low prevalence of high and low quality wines
 fit_dt <- train(quality.lvl ~ .,
                 method = "rpart",
                 metric = "Kappa",
@@ -157,8 +157,9 @@ fit_rf <- train(quality.lvl ~ .,
                 ntree = 100,
                 data = train_set)
 
-
+#plot the tuning of mtry parameter
 ggplot(fit_rf)
+
 #plot decision tree created with weighted observations
 plot(fit_rf$finalModel)
 
@@ -174,4 +175,7 @@ cm_rf_weighted <- confusionMatrix(pred_rf, test_set$quality.lvl)
 cm_rf_weighted[["byClass"]][ , "F1"]
 
 #plot variable importance of predictors
+ggplot(varImp(fit_rf))
 
+#here we see the most correlated factors having the largest importance within the model
+       
