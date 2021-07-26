@@ -86,18 +86,13 @@ correlations <- cor(wine_quality %>% keep(is.numeric))
 
 #plot correlations on heatmap
 col<- colorRampPalette(c("blue", "white", "red"))(20) #set heatmap colour palette
-correlation_heatmap <- heatmap(x = correlations, col = col, symm = TRUE)
+heatmap(x = correlations, col = col, symm = TRUE)
 ```
 Alcohol, density, and volatile acid appear most correlated with quality. We also see correlations of density with alcohol and free sulfur dioxide with total sulfur as may be expected. Alcohol is less dense than than the water which makes up most of the remainder of the wine, and free sulfur dioxide is a component of total sulfur dioxide.
 
+Next, to better achieve the goal of the analysis, we group the wine quality ratings. 5 and 6 are grouped into 'med' (very prevalent); 3 and 4 to 'low'; and 7, 8 and 9 into 'high' (both much less prevalent). This allows for better visualization and more practical classification. A wine maker is likely most interested in avoiding low quality product or achieving high quality product.
 
-```{r data exploration, message=FALSE, warning=FALSE, include=FALSE}
-
-
-
-
-#
-
+```{r by quality, message=FALSE, warning=FALSE, include=FALSE}
 #Group quality into high, med, and low
 wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
                                          low = c("3","4"),
