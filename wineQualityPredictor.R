@@ -48,7 +48,7 @@ wine_quality %>%
 #density uniform
 #long tails on many
 
-#calculate correlations between features
+#calculate correlations between predictors
 correlations <- cor(wine_quality %>% keep(is.numeric))
 
 #plot correlations on heatmap
@@ -63,14 +63,14 @@ wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
                                          med = c("5","6"),
                                          high = c("7","8","9"))
 
-#Plot density plots by colour across features. We expect colour to be important to classify.
+#Plot density plots by colour across predictors. We expect colour to be important to classify.
 wine_quality %>%
   pivot_longer(cols = 1:12) %>%
   ggplot(aes(value, colour = colour)) +
   facet_wrap(~ name, scales = "free") +
   geom_density()
 
-#Plot density plots by assigned quality level across features for red wine
+#Plot density plots by assigned quality level across predictors for red wine
 wine_quality %>%
   select(-quality) %>%
   filter(colour == "red") %>%
@@ -80,7 +80,7 @@ wine_quality %>%
   geom_density() +
   ggtitle("Red Wines")
 
-#Plot density plots by assigned quality level across features for white wine
+#Plot density plots by assigned quality level across predictors for white wine
 wine_quality %>%
   select(-quality) %>%
   filter(colour == "white") %>%
@@ -150,18 +150,17 @@ cm_dt_weighted[["byClass"]][ , "F1"]
 #weighted model might be more useful to a winemaker looking to avoid a poor product, where the non-weighted model would be better for a high quality producer looking for their best wine
 
 ##Use random forest to overcome the inflexibility of a single tree
-#set tuning parameters to reduce computation time
-tunegrid <- expand.grid(.ntree=10)
-
+#set number of trees to reduce computation time by 80%
 fit_rf <- train(quality.lvl ~ .,
                 method = "rf",
                 metric = "Kappa",
-                tunegrid = tunegrid,
+                ntree = 100,
                 data = train_set)
+
 
 ggplot(fit_rf)
 #plot decision tree created with weighted observations
-plot(fit_rf$finalModel, margin = 0.1)
+plot(fit_rf$finalModel)
 
 #print results of cross validation
 fit_rf
@@ -171,8 +170,8 @@ fit_rf
 pred_rf <- predict(fit_rf,test_set)
 
 #print confusion matrix for model evaluation
-cm_dt_weighted <- confusionMatrix(pred_rf, test_set$quality.lvl)
-cm_dt_weighted[["byClass"]][ , "F1"]
+cm_rf_weighted <- confusionMatrix(pred_rf, test_set$quality.lvl)
+cm_rf_weighted[["byClass"]][ , "F1"]
 
-#varImp
+#plot variable importance of predictors
 
