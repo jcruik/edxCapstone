@@ -97,7 +97,7 @@ wine_quality %>%
 ##Train model
 #repeatable randomness
 set.seed(1, sample.kind = "Rounding")
-#create data partition index to split 20% of the edx set into a test set and 80% into a training set
+#create data partition index to split 20% of the wine quality set into a test set and 80% into a training set
 train_index <- createDataPartition(y = wine_quality$quality.lvl,
                                    p = 0.8,
                                    list = FALSE)
@@ -116,7 +116,7 @@ fit_dt <- train(quality.lvl ~ .,
 plot(fit_dt$finalModel, margin = 0.1)
 text(fit_dt$finalModel, cex = 0.75)
 
-#not identifying low quality wines is a problem for a winemaker. increasing weights of low quality wines based on their prevelance
+#not identifying low quality wines is a problem for a winemaker. increasing weights of low quality wines based on their prevalence
 positiveWeight = 1.0 / (nrow(subset(train_set, quality.lvl == "low")) / nrow(train_set))
 negativeWeight = 1.0 / (nrow(subset(train_set, quality.lvl %in% c("med", "high"))) / nrow(train_set))
 
