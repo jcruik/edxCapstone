@@ -50,7 +50,7 @@ Using a public dataset and R scripts, this project attempts to create a model wh
 
 ## Analysis
 
-After downloading the tidy dataset for each of the white and red wines, they are combined with an added factor for wine colour into a larger dataset names 'wine quality'. The length (`r nrow(wine_quality)`) and the features present in the dataset are then noted. Below, the structure of the data can be seen by printing the first few rows of the data.
+After downloading the tidy dataset for each of the white and red wines, they are combined with an added factor for wine colour into a larger dataset names 'wine quality'. We note the length (`r nrow(wine_quality)`) and the features present in the dataset. We can see the structure of the data by printing the first few rows of the data.
 
 ```{r data glimpse, echo=FALSE, fig.width=6, message=FALSE, warning=FALSE}
 kable(head(wine_quality),
@@ -74,22 +74,29 @@ We note a few interesting observations:
 
 - Quality is only rated at integers below 3 or above 9  
 - Most wines rated either 5 or 6  
-- Total sulphur has a bi-modal distribution  
+- Total sulfur has a bi-modal distribution  
 - The density is very uniform across all observations  
 - long tails on many of the distributions  
 
+Next, we check for correlations between the features using a heatmap with red being positive and blue being negative.
 
-```{r data exploration, message=FALSE, warning=FALSE, include=FALSE}
-
-
+```{r corr heatmap, echo=FALSE, message=FALSE, warning=FALSE}
 #calculate correlations between predictors
 correlations <- cor(wine_quality %>% keep(is.numeric))
 
 #plot correlations on heatmap
 col<- colorRampPalette(c("blue", "white", "red"))(20) #set heatmap colour palette
 correlation_heatmap <- heatmap(x = correlations, col = col, symm = TRUE)
+```
+Alcohol, density, and volatile acid appear most correlated with quality. We also see correlations of density with alcohol and free sulfur dioxide with total sulfur as may be expected. Alcohol is less dense than than the water which makes up most of the remainder of the wine, and free sulfur dioxide is a component of total sulfur dioxide.
 
-#alcohol, density, and volatile.acid appear most correlated with quality
+
+```{r data exploration, message=FALSE, warning=FALSE, include=FALSE}
+
+
+
+
+#
 
 #Group quality into high, med, and low
 wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
