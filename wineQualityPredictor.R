@@ -106,7 +106,7 @@ train_index <- createDataPartition(y = wine_quality$quality.lvl,
 train_set <- wine_quality[train_index,] %>% select(-quality) #remove quality as a predictor
 test_set <- wine_quality[-train_index,] %>% select(-quality) #remove quality as a predictor
 
-#fit decision tree algorithm. Using ROC
+#fit decision tree algorithm. Using Kappa because of the low prevelance of high and low quality wines
 fit_dt <- train(quality.lvl ~ .,
                 method = "rpart",
                 metric = "Kappa",
@@ -117,7 +117,7 @@ plot(fit_dt$finalModel, margin = 0.1)
 text(fit_dt$finalModel, cex = 0.75)
 
 #not identifying low quality wines is a problem for a winemaker. increasing weights of low quality wines based on their prevelance
-positiveWeight = 3.0 / (nrow(subset(train_set, quality.lvl == "low")) / nrow(train_set))
+positiveWeight = 1.0 / (nrow(subset(train_set, quality.lvl == "low")) / nrow(train_set))
 negativeWeight = 1.0 / (nrow(subset(train_set, quality.lvl %in% c("med", "high"))) / nrow(train_set))
 
 #create weighting index
@@ -136,6 +136,17 @@ text(fit_dt_weighted$finalModel, cex = 0.75)
 
 #print results of cross validation
 fit_dt_weighted
+
+##Evaluate on test set
+#compute modeled predictions
+pred_dt_weighted <- predict(fit_dt_weighted,test_set)
+
+#calculate confusion matrix
+
+
+#print confusion matrix for model evaluation
+cm_dt_weighted <- confusionMatrix(pred_dt_weighted, test_set$quality.lvl)
+cm_dt_weighted[["byClass"]][ , "F1"]
 
 #random forest classification
 
