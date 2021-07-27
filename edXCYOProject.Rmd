@@ -13,11 +13,13 @@ if(!require(caret)) install.packages("caret")
 if(!require(rpart)) install.packages("rpart")
 if(!require(randomForest)) install.packages("randomForest")
 if(!require(knitr)) install.packages("knitr")
+if(!require(kableExtra)) install.packages("kableExtra")
 
 library(tidyverse)
 library(caret)
 library(rpart)
 library(knitr)
+library(kableExtra)
 
 ##Wrangle wine quality data
 ##data located here: http://www3.dsi.uminho.pt/pcortez/wine/winequality.zip
@@ -44,18 +46,20 @@ remove(dl, reds, whites)
 options(digits = 5)
 
 ```
-## Introduction
+# Introduction
 
 Using a public dataset and R scripts, this project attempts to create a model which would be useful to identify wine quality with a suite of chemical analyses. The dataset is available at the following URL: http://www3.dsi.uminho.pt/pcortez/wine/winequality.zip. Exploratory data analysis reveals some useful insights about a few of the predictors and the subjective quality ratings themselves. The goal of the project is refined based on these insights, with the problem being defined as one of classification. Two algorithms, Recursive Partitioning and Regression Trees (RPART) and random forest, are used to predict the quality classification of wines based on the data.
 
-## Analysis
+# Analysis
 
+## Data Exploration
 After downloading the tidy dataset for each of the white and red wines, they are combined with an added factor for wine colour into a larger dataset names 'wine quality'. We note the length (`r nrow(wine_quality)`) and the features present in the dataset. We can see the structure of the data by printing the first few rows of the data.
 
 ```{r data glimpse, echo=FALSE, fig.width=6, message=FALSE, warning=FALSE}
 kable(head(wine_quality),
       col.names = gsub("[.]", " ",names(wine_quality)),
-      digits = 1)
+      digits = 3) %>%
+  kable_styling(latex_options = "scale_down")
 ```
 
 Next, we take a look at the distributions of the features by plotting histograms of each:
@@ -92,7 +96,9 @@ Alcohol, density, and volatile acid appear most correlated with quality. We also
 
 Next, to better achieve the goal of the analysis, we group the wine quality ratings. 5 and 6 are grouped into 'med' (very prevalent); 3 and 4 to 'low'; and 7, 8 and 9 into 'high' (both much less prevalent). This allows for better visualization and more practical classification. A wine maker is likely most interested in avoiding low quality product or achieving high quality product.
 
-```{r by quality, message=FALSE, warning=FALSE, include=FALSE}
+First we visualize the differences between reds and whites using density plots:
+
+```{r by colour, echo=FALSE, message=FALSE, warning=FALSE}
 #Group quality into high, med, and low
 wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
                                          low = c("3","4"),
@@ -100,14 +106,18 @@ wine_quality$quality.lvl <- fct_collapse(as.factor(wine_quality$quality),
                                          high = c("7","8","9"))
 
 #Plot density plots by colour across predictors. We expect colour to be important to classify.
-bycolour_plot <- wine_quality %>%
+wine_quality %>%
   pivot_longer(cols = 1:12) %>%
   ggplot(aes(value, colour = colour)) +
   facet_wrap(~ name, scales = "free") +
   geom_density()
+```
 
+Here we note the reason for the bimodal total sulfur distribution, with whites containing higher levels in general. Similarly, reds contain more volatile acidity. What is not observed is a marked difference in quality through this dataset.
+
+```{r by quality, echo=FALSE, message=FALSE, warning=FALSE}
 #Plot density plots by assigned quality level across predictors for red wine
-byquality_plot_red <- wine_quality %>%
+wine_quality %>%
   select(-quality) %>%
   filter(colour == "red") %>%
   pivot_longer(cols = 1:11) %>%
@@ -117,7 +127,7 @@ byquality_plot_red <- wine_quality %>%
   ggtitle("Red Wines")
 
 #Plot density plots by assigned quality level across predictors for white wine
-byquality_plot_white <- wine_quality %>%
+wine_quality %>%
   select(-quality) %>%
   filter(colour == "white") %>%
   pivot_longer(cols = 1:11) %>%
@@ -125,13 +135,9 @@ byquality_plot_white <- wine_quality %>%
   facet_wrap(~ name, scales = "free") +
   geom_density() +
   ggtitle("White Wines")
-
-#density. higher alcohol means lower density
-#alcohol (long tail)
-#residual sugar (long tail)
 ```
 
-
+Using these plots we see the same features predicting quality as found using a general correlation. Higher alcohol, lower density, and lower volatile acidity wines appear to be rated more highly.
 ```{r partitioning, message=FALSE, warning=FALSE, include=FALSE}
 ##Train models
 #repeatable randomness
@@ -146,9 +152,13 @@ train_set <- wine_quality[train_index,] %>% select(-quality) #remove quality as 
 test_set <- wine_quality[-train_index,] %>% select(-quality) #remove quality as a predictor
 ```
 
+## Modeling
+
 Firstly, the training dataset 'wine quality' is partitioned into a 'train' set and a 'test' set for various models to be trained while avoiding overfitting. The caret function 'createDataPartition' is used to stratify the data by quality level to maintain the prevalence of high and low quality wines. 80% of the data, or `r nrow(train_set)` randomly selected ratings make up the training set and the remaining `r nrow(test_set)` ratings are used for model testing. 80% is used for training to avoid over fitting with the moderate number of predictors.
 
-```{r modeling, message=FALSE, warning=FALSE, include=FALSE}
+The first classification algorithm used is RPART. The benefit of this algorithm is the easy interpretability although it is rarely the most accurate. The 'caret' package is used alongside the 'rpart' package to train the model. the complexity parameter, that is the minimum improvement in model accuracy to keep a new branch of the decision tree, is Kappa. This metric is better for the 'wine quality' data where high and low quality wines are rare. The metric compares the model accuracy to that of a random selector. The resulting classification model is shown here:
+
+```{r decision tree, echo=FALSE, message=FALSE, warning=FALSE}
 #fit decision tree algorithm. Using Kappa because of the low prevalence of high and low quality wines
 fit_dt <- train(quality.lvl ~ .,
                 method = "rpart",
@@ -157,9 +167,13 @@ fit_dt <- train(quality.lvl ~ .,
 
 #plot the decision tree
 plot(fit_dt$finalModel, margin = 0.1)
-text(fit_dt$finalModel, cex = 0.75)
+text(fit_dt$finalModel, cex = 0.65)
+```
 
-#not identifying low quality wines is a problem for a winemaker. increasing weights of low quality wines based on their prevalence
+Alcohol, which we've seen is most strongly correlated to wine quality, is unsurprisingly the driver of the model. There are issues with the model, however, as no low quality wines are ever classified. This limits the usefulness of the model for any winemaker interested in avoiding low quality wine. To overcome this, we weight observations of low quality wines higher in the recursive partitioning process and check the model output:
+
+```{r weighted decision tree, echo=FALSE, message=FALSE, warning=FALSE}
+#increasing weights of low quality wines based on their prevalence
 positiveWeight = 1.0 / (nrow(subset(train_set, quality.lvl == "low")) / nrow(train_set))
 negativeWeight = 1.0 / (nrow(subset(train_set, quality.lvl %in% c("med", "high"))) / nrow(train_set))
 
@@ -176,10 +190,14 @@ fit_dt_weighted <- train(quality.lvl ~ .,
 
 #plot decision tree created with weighted observations
 plot(fit_dt_weighted$finalModel, margin = 0.1)
-text(fit_dt_weighted$finalModel, cex = 0.75)
+text(fit_dt_weighted$finalModel, cex = 0.65)
+```
+
+This model would be more useful for a winemaker looking to avoid poor product, but not as useful for one interested in a premium product. We can see the accuracy of the model across a grid of tuning parameters, in this case the complexity parameter 'cp'. We see an increase in Kappa, which is interpreted as only a small advantage over a random selection, increasing as 'cp' is lowered. This is likely due to overfitting the training data, a weakness of the RPART algorithm. The F1 score of the model is also included. F1 is chosen as it balances selectivity with sensitivity.
+
+```{r weighted decision tree evaluation, echo=FALSE, message=FALSE, warning=FALSE}
 
 #print results of cross validation
-fit_dt_weighted
 ggplot(fit_dt_weighted)
 
 ##Evaluate on test set
@@ -188,10 +206,11 @@ pred_dt_weighted <- predict(fit_dt_weighted,test_set)
 
 #print confusion matrix for model evaluation
 cm_dt_weighted <- confusionMatrix(pred_dt_weighted, test_set$quality.lvl)
-cm_dt_weighted[["byClass"]][ , "F1"]
+kable(cm_dt_weighted[["byClass"]][ , "F1"], col.names = c(NULL, "F1 Score")) %>%
+  kable_styling(position = "center")
+```
 
-#weighted model might be more useful to a winemaker looking to avoid a poor product, where the non-weighted model would be better for a high quality producer looking for their best wine
-
+```{r random forest model, message=FALSE, warning=FALSE, include=FALSE}
 ##Use random forest to overcome the inflexibility of a single tree
 #set number of trees to reduce computation time by 80%
 fit_rf <- train(quality.lvl ~ .,
@@ -224,6 +243,6 @@ ggplot(varImp(fit_rf))
 
 ```
 
-## Results
+# Results
 
-## Conclusions
+# Conclusions
