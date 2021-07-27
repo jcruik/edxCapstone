@@ -210,24 +210,33 @@ kable(cm_dt_weighted[["byClass"]][ , "F1"], col.names = c(NULL, "F1 Score")) %>%
   kable_styling(position = "center")
 ```
 
-```{r random forest model, message=FALSE, warning=FALSE, include=FALSE}
+Model performance can certainly be improved with other, more flexible, algorithms. Random forest is run next to classify both high and low quality wines with a higher F1 score. We use the same Kappa metric and reduce the number of trees to 100 after an initial run with the default 500 trees that shows a plateau in the error metrics, to reduce computation time.
+
+```{r random forest ntrees, echo=FALSE, message=FALSE, warning=FALSE}
 ##Use random forest to overcome the inflexibility of a single tree
+#try all possible number of predictors for tuning
+tunegrid <- expand.grid(mtry=c(1:10))
+
 #set number of trees to reduce computation time by 80%
 fit_rf <- train(quality.lvl ~ .,
                 method = "rf",
                 metric = "Kappa",
-                ntree = 10, #CHANGE BACK TO 100
+                ntree = 100,
+                tuneGrid = tunegrid,
                 data = train_set)
 
+#plot ntrees plateau
+plot(fit_rf$finalModel)
+```
+
+
+The number of predictors selected for each decision tree in the random forest can be a useful tuning parameter for the algorithm. In this case we see little improvement beyond 3 predictors per tree.
+```{r random forest mtry, echo=FALSE, message=FALSE, warning=FALSE}
 #plot the tuning of mtry parameter
 ggplot(fit_rf)
+```
 
-#plot decision tree created with weighted observations
-plot(fit_rf$finalModel)
-
-#print results of cross validation
-fit_rf
-
+```{r random forest mtry, echo=FALSE, message=FALSE, warning=FALSE}
 ##Evaluate on test set
 #compute modeled predictions
 pred_rf <- predict(fit_rf,test_set)

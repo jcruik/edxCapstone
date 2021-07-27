@@ -160,7 +160,7 @@ fit_rf <- train(quality.lvl ~ .,
 #plot the tuning of mtry parameter
 ggplot(fit_rf)
 
-#plot decision tree created with weighted observations
+#plot ntrees plateau
 plot(fit_rf$finalModel)
 
 #print results of cross validation
