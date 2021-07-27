@@ -217,11 +217,10 @@ Model performance can certainly be improved with other, more flexible, algorithm
 #try all possible number of predictors for tuning
 tunegrid <- expand.grid(mtry=c(1:10))
 
-#set number of trees to reduce computation time by 80%
+#train randomforest model across 10 values of mtry
 fit_rf <- train(quality.lvl ~ .,
                 method = "rf",
                 metric = "Kappa",
-                ntree = 100,
                 tuneGrid = tunegrid,
                 data = train_set)
 
@@ -229,29 +228,33 @@ fit_rf <- train(quality.lvl ~ .,
 plot(fit_rf$finalModel)
 ```
 
-
-The number of predictors selected for each decision tree in the random forest can be a useful tuning parameter for the algorithm. In this case we see little improvement beyond 3 predictors per tree.
+The number of predictors selected for each decision tree in the random forest can be a useful tuning parameter for the algorithm. In this case we see little improvement beyond 3 predictors per tree but slightly higher accuracy with 8, which is selected for use in the final model.
 ```{r random forest mtry, echo=FALSE, message=FALSE, warning=FALSE}
 #plot the tuning of mtry parameter
 ggplot(fit_rf)
 ```
-
+Next we plot the variable importance of each predictor to see which are most important for modeling, below. We notice the most important predictors are those which were most highly correlated with quality in the original data: alcohol, density, and volatile acidity. A winemaker might cut analysis costs by forgoing lower importance predictors.
 ```{r random forest mtry, echo=FALSE, message=FALSE, warning=FALSE}
+#plot the variable importance of predictors
+ggplot(varImp(fit_rf))
+```
+# Results
+
+Using the random forest model, we predict the quality level of the wines observed in the test set and print the confusion matrix and F1 scores.
+```{r random forest eval, echo=FALSE, message=FALSE, warning=FALSE}
 ##Evaluate on test set
 #compute modeled predictions
 pred_rf <- predict(fit_rf,test_set)
 
 #print confusion matrix for model evaluation
-cm_rf_weighted <- confusionMatrix(pred_rf, test_set$quality.lvl)
-cm_rf_weighted[["byClass"]][ , "F1"]
-
-#plot variable importance of predictors
-ggplot(varImp(fit_rf))
-
-#here we see the most correlated factors having the largest importance within the model
-
+cm_rf <- confusionMatrix(pred_rf, test_set$quality.lvl)
+cm_rf$table
+kable(cm_rf[["byClass"]][ , "F1"], col.names = c(NULL, "F1 Score")) %>%
+  kable_styling(position = "center")
 ```
 
-# Results
+Here we see that the model is much improved from the RPART weighted decision tree, with high quality wines predicted, nearly double the F1 score on low quality wines, and over 20% higher F1 score for medium quality wines. This reinforces the model performance seen during training with Kappa values of 0.48, indicating that the model was close to 50% better than chance at identifying the rare high and low quality wines. High quality wines are more easily identified than lower quality wines with the final model, and the model would be useful in practice.
 
 # Conclusions
+
+After downloading a dataset of vinho verde 
