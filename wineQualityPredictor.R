@@ -153,10 +153,11 @@ cm_dt_weighted[["byClass"]][ , "F1"]
 #try all possible number of predictors for tuning
 tunegrid <- expand.grid(mtry=c(1:10))
 
-#train random forest model
+#train random forest model (reduced ntree based on initial test to reduce computation time)
 fit_rf <- train(quality.lvl ~ .,
                 method = "rf",
                 metric = "Kappa",
+                ntree = 100,
                 tuneGrid = tunegrid,
                 data = train_set)
 
