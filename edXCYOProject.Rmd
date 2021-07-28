@@ -48,12 +48,12 @@ options(digits = 5)
 ```
 # Introduction
 
-Using a public dataset and R scripts, this project attempts to create a model which would be useful to identify wine quality with a suite of chemical analyses. The dataset is available at the following URL: http://www3.dsi.uminho.pt/pcortez/wine/winequality.zip. Exploratory data analysis reveals some useful insights about a few of the predictors and the subjective quality ratings themselves. The goal of the project is refined based on these insights, with the problem being defined as one of classification. Two algorithms, Recursive Partitioning and Regression Trees (RPART) and random forest, are used to predict the quality classification of wines based on the data.
+Using a public data set and R scripts, this project attempts to create a model which would be useful to identify wine quality with a suite of chemical analyses. The data set is available at the following URL: http://www3.dsi.uminho.pt/pcortez/wine/winequality.zip. Exploratory data analysis reveals some useful insights about a few of the predictors and the subjective quality ratings themselves. The goal of the project is refined based on these insights, with the problem being defined as one of classification. Two algorithms, Recursive Partitioning and Regression Trees (RPART) and random forest, are used to predict the quality classification of wines based on the data.
 
 # Analysis
 
 ## Data Exploration
-After downloading the tidy dataset for each of the white and red wines, they are combined with an added factor for wine colour into a larger dataset names 'wine quality'. We note the length (`r nrow(wine_quality)`) and the features present in the dataset. We can see the structure of the data by printing the first few rows of the data.
+After downloading the tidy data set for each of the white and red wines, they are combined with an added factor for wine colour into a larger data set names 'wine quality'. We note the length (`r nrow(wine_quality)`) and the features present in the data set. We can see the structure of the data by printing the first few rows of the data.
 
 ```{r data glimpse, echo=FALSE, fig.width=6, message=FALSE, warning=FALSE}
 kable(head(wine_quality),
@@ -113,7 +113,7 @@ wine_quality %>%
   geom_density()
 ```
 
-Here we note the reason for the bimodal total sulfur distribution, with whites containing higher levels in general. Similarly, reds contain more volatile acidity. What is not observed is a marked difference in quality through this dataset.
+Here we note the reason for the bimodal total sulfur distribution, with whites containing higher levels in general. Similarly, reds contain more volatile acidity. What is not observed is a marked difference in quality through this data set.
 
 ```{r by quality, echo=FALSE, message=FALSE, warning=FALSE}
 #Plot density plots by assigned quality level across predictors for red wine
@@ -154,7 +154,7 @@ test_set <- wine_quality[-train_index,] %>% select(-quality) #remove quality as 
 
 ## Modeling
 
-Firstly, the training dataset 'wine quality' is partitioned into a 'train' set and a 'test' set for various models to be trained while avoiding overfitting. The caret function 'createDataPartition' is used to stratify the data by quality level to maintain the prevalence of high and low quality wines. 80% of the data, or `r nrow(train_set)` randomly selected ratings make up the training set and the remaining `r nrow(test_set)` ratings are used for model testing. 80% is used for training to avoid over fitting with the moderate number of predictors.
+Firstly, the training data set 'wine quality' is partitioned into a 'train' set and a 'test' set for various models to be trained while avoiding overfitting. The caret function 'createDataPartition' is used to stratify the data by quality level to maintain the prevalence of high and low quality wines. 80% of the data, or `r nrow(train_set)` randomly selected ratings make up the training set and the remaining `r nrow(test_set)` ratings are used for model testing. 80% is used for training to avoid over fitting with the moderate number of predictors.
 
 The first classification algorithm used is RPART. The benefit of this algorithm is the easy interpretability although it is rarely the most accurate. The 'caret' package is used alongside the 'rpart' package to train the model. the complexity parameter, that is the minimum improvement in model accuracy to keep a new branch of the decision tree, is Kappa. This metric is better for the 'wine quality' data where high and low quality wines are rare. The metric compares the model accuracy to that of a random selector. The resulting classification model is shown here:
 
@@ -234,7 +234,7 @@ The number of predictors selected for each decision tree in the random forest ca
 ggplot(fit_rf)
 ```
 Next we plot the variable importance of each predictor to see which are most important for modeling, below. We notice the most important predictors are those which were most highly correlated with quality in the original data: alcohol, density, and volatile acidity. A winemaker might cut analysis costs by forgoing lower importance predictors.
-```{r random forest mtry, echo=FALSE, message=FALSE, warning=FALSE}
+```{r random forest varImp, echo=FALSE, message=FALSE, warning=FALSE}
 #plot the variable importance of predictors
 ggplot(varImp(fit_rf))
 ```
@@ -257,4 +257,4 @@ Here we see that the model is much improved from the RPART weighted decision tre
 
 # Conclusions
 
-After downloading a dataset of vinho verde 
+After downloading a data set of wine ratings, a number of statistical insights were gathered to inform a modeling approach. Examining the distribution of quality ratings it is clear that the project goals were suited to a classification model. A decision tree model was inflexible yet helpful to interpret the decision making taking place. A random forest model improved upon the decision tree model, providing flexibility at the cost of interpretability. In the end a model was developed which could be used by a winemaker to automatically estimate quality based mostly upon alocohol content, density, and volatile acidity. The model was developed with both sensitivity and selectivity as evaluation metrics. It can identify low quality wines with an F1 score of 0.28, medium quality wines with an F1 score of 0.91, and high quality wines with an F1 score of 0.67. The model could be improved by inclusion of many more observations, and perhaps in consultation with subject matter experts to determine which chemical analyses would influence taste beyond those included in this data set. Other classification models beyond the scope of the course may also be considered, such as neural networks.
