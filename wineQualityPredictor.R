@@ -150,11 +150,14 @@ cm_dt_weighted[["byClass"]][ , "F1"]
 #weighted model might be more useful to a winemaker looking to avoid a poor product, where the non-weighted model would be better for a high quality producer looking for their best wine
 
 ##Use random forest to overcome the inflexibility of a single tree
-#set number of trees to reduce computation time by 80%
+#try all possible number of predictors for tuning
+tunegrid <- expand.grid(mtry=c(1:10))
+
+#train random forest model
 fit_rf <- train(quality.lvl ~ .,
                 method = "rf",
                 metric = "Kappa",
-                ntree = 100,
+                tuneGrid = tunegrid,
                 data = train_set)
 
 #plot the tuning of mtry parameter
@@ -172,10 +175,11 @@ pred_rf <- predict(fit_rf,test_set)
 
 #print confusion matrix for model evaluation
 cm_rf_weighted <- confusionMatrix(pred_rf, test_set$quality.lvl)
+cm_rf$table
+
+#print F1 scores
 cm_rf_weighted[["byClass"]][ , "F1"]
 
 #plot variable importance of predictors
 ggplot(varImp(fit_rf))
-
-#here we see the most correlated factors having the largest importance within the model
        
