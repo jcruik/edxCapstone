@@ -221,6 +221,7 @@ tunegrid <- expand.grid(mtry=c(1:10))
 fit_rf <- train(quality.lvl ~ .,
                 method = "rf",
                 metric = "Kappa",
+                ntree = 10,
                 tuneGrid = tunegrid,
                 data = train_set)
 
@@ -234,10 +235,11 @@ The number of predictors selected for each decision tree in the random forest ca
 ggplot(fit_rf)
 ```
 Next we plot the variable importance of each predictor to see which are most important for modeling, below. We notice the most important predictors are those which were most highly correlated with quality in the original data: alcohol, density, and volatile acidity. A winemaker might cut analysis costs by forgoing lower importance predictors.
-```{r random forest varImp, echo=FALSE, message=FALSE, warning=FALSE}
+```{r random forest varImp, echo=FALSE, message=FALSE, warning=FALSE, fig.align = 'center'}
 #plot the variable importance of predictors
 ggplot(varImp(fit_rf))
 ```
+
 # Results
 
 Using the random forest model, we predict the quality level of the wines observed in the test set and print the confusion matrix and F1 scores.
