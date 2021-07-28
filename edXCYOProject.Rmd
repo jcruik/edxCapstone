@@ -221,7 +221,6 @@ tunegrid <- expand.grid(mtry=c(1:10))
 fit_rf <- train(quality.lvl ~ .,
                 method = "rf",
                 metric = "Kappa",
-                ntree = 10,
                 tuneGrid = tunegrid,
                 data = train_set)
 
